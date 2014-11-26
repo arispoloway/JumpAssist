@@ -38,6 +38,9 @@
 	*
 	* TODO:
 	* Polish for release.
+	* Re-implement JumpHelp() function - took away in favor of chat functionality
+	* Fix skeys no database detection for color change
+	* Support for jtele with one argument
 	*
 	* BUGS:
 	* None reported.
@@ -82,7 +85,7 @@
 
 #define PLUGIN_VERSION "0.7.1"
 #define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush"
+#define PLUGIN_AUTHOR "rush - Updated by talkingmelon"
 
 #define cDefault    0x01
 #define cLightGreen 0x03
@@ -102,6 +105,8 @@ new Handle:g_hSentryLevel;
 new Handle:g_hCheapObjects;
 new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
+
+new Handle:waitingForPlayers;
 
 new String:szWebsite[128] = "http://www.jump.tf/";
 
@@ -133,6 +138,7 @@ public OnPluginStart()
 	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	
 	// Jump Assist console commands
+	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("ja_save", cmdSave, "Saves your current location.");
 	RegConsoleCmd("ja_tele", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("ja_reset", cmdReset, "Sends you back to the beginning without deleting your save..");
@@ -144,21 +150,18 @@ public OnPluginStart()
 	RegConsoleCmd("sm_undo", cmdUndo, "Restores your last saved position.");
 	RegConsoleCmd("sm_t", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
-	RegConsoleCmd("sm_skeys_color", cmdChangeSkeysColor, "Changes the color of the text for skeys.");
+	RegConsoleCmd("sm_skeys_color", cmdChangeSkeysColor, "Changes the color of the text for skeys."); //cannot whether the database is configured or not
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
 
 	// Admin Commands
 	RegAdminCmd("sm_mapset", cmdMapSet, ADMFLAG_GENERIC, "Change map settings");
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
-	RegAdminCmd("sm_jtele", SendToLocation, ADMFLAG_GENERIC, "Sends a player to the spcified jump.");
+	RegAdminCmd("sm_jatele", SendToLocation, ADMFLAG_GENERIC, "Sends a player to the spcified jump.");
 	RegAdminCmd("sm_addtele", cmdAddTele, ADMFLAG_GENERIC, "Adds a teleport location for the current map");
 
 	// ROOT COMMANDS, they're set to root users for a reason.
 	RegAdminCmd("ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
 
-	// JM Support
-	RegConsoleCmd("jm_saveloc", cmdSave, "Legacy: Saves your current location.");
-	RegConsoleCmd("jm_teleport", cmdTele, "Legacy: Teleports you to your current saved location.");
 	
 	// Hooks
 	HookEvent("player_team", eventPlayerChangeTeam);
@@ -195,6 +198,8 @@ public OnPluginStart()
 	HudDisplayDuck = CreateHudSynchronizer();
 	HudDisplayJump = CreateHudSynchronizer();
 
+	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
+	
 	ConnectToDatabase();
 	SetDesc();
 }
@@ -230,12 +235,11 @@ public OnMapStart()
 	if (GetConVarBool(g_hPluginEnabled))
 	{
 		SetDesc();
-		if (g_hDatabase == INVALID_HANDLE)
+		if (g_hDatabase != INVALID_HANDLE)
 		{
-			CreateTimer(1.0, timerMapSettings);
-		} else {
 			LoadMapCFG();
 		}
+		SetConVarInt(waitingForPlayers, 0);
 
 		// Precache cap sounds
 		PrecacheSound("misc/tf_nemesis.wav");
@@ -280,6 +284,7 @@ public OnClientPutInServer(client)
 		}
 		// Load the player profile.
 		decl String:sSteamID[64]; GetClientAuthString(client, sSteamID, sizeof(sSteamID));
+
 		LoadPlayerProfile(client, sSteamID);
 
 		// Welcome message. 15 seconds seems to be a good number.
@@ -294,6 +299,25 @@ public OnClientPutInServer(client)
 /*****************************************************************************************************************
 												Functions
 *****************************************************************************************************************/
+
+public Action:cmdJAHelp(client, args)
+{
+	if (!IsValidClient(client)) { return; }
+
+	PrintToChat(client, "*************JA HELP**************");
+	PrintToChat(client, "Put either ! or / in front of each command");
+	PrintToChat(client, "! - Prints to chat, / - Hidden from chat");
+	PrintToChat(client, "************COMMANDS**************");
+	PrintToChat(client, "save or s - Saves your position");
+	PrintToChat(client, "tele or t- Teleports you to your saved position");
+	PrintToChat(client, "reset or r- Restarts you on the map");
+	PrintToChat(client, "restart - Deletes your save and restarts you");
+
+	
+	return;
+
+}
+
 stock bool:IsUsingJumper(client)
 {
 	if (!IsValidClient(client)) { return false; }
@@ -418,17 +442,24 @@ public Action:cmdDoRegen(client, args)
 	}
 	return Plugin_Handled;
 }
-public Action:cmdClearSave(client, args)
-{
-	if (GetConVarBool(g_hPluginEnabled))
-	{
-		EraseLocs(client);
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_ClearedSave");
-	}
-	return Plugin_Handled;
-}
+
+//public Action:cmdClearSave(client, args)
+//{
+//	if (GetConVarBool(g_hPluginEnabled))
+//	{
+//		EraseLocs(client);
+//		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_ClearedSave");
+//	}
+//	return Plugin_Handled;
+//}
+
 public Action:cmdSendPlayer(client, args)
 {
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
 	if (GetConVarBool(g_hPluginEnabled))
 	{
 		if (args < 2)
@@ -548,6 +579,7 @@ public Action:cmdGotoClient(client, args)
 }
 public Action:cmdReset(client, args)
 {
+	PrintToChat(client, "here");
 	if (GetConVarBool(g_hPluginEnabled))
 	{
 		if (skillsrank)
@@ -562,16 +594,10 @@ public Action:cmdReset(client, args)
 		{
 			return Plugin_Handled;
 		}
-		g_fOrigin[client][0] = 0.0;
-		g_fOrigin[client][1] = 0.0;
-		g_fOrigin[client][2] = 0.0;
-		g_fAngles[client][0] = 0.0;
-		g_fAngles[client][1] = 0.0;
-		g_fAngles[client][2] = 0.0;
 		
-		EraseLocs(client);
+		SendToStart(client);
 		g_bUsedReset[client] = true;
-
+	
 		TF2_RespawnPlayer(client);
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_SentToStart");
 	}
@@ -579,6 +605,7 @@ public Action:cmdReset(client, args)
 }
 public Action:cmdSay(client, const String:command[], args)
 {
+
 	new String:text[192];
 	GetCmdArgString(text, sizeof(text));
 	
@@ -610,8 +637,13 @@ public Action:cmdSay(client, const String:command[], args)
 	}
 	if (StrEqual(text[startidx], "!restart", false))
 	{
-		ResetPlayerPos(client);
+		if(databaseConfigured)
+		{
+			ResetPlayerPos(client);
+		}
 		EraseLocs(client);
+		TF2_RespawnPlayer(client);
+		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	}
 	if (StrEqual(text[startidx], "!ja_tele", false))
 	{
@@ -626,10 +658,6 @@ public Action:cmdSay(client, const String:command[], args)
 		return Plugin_Handled;
 	}
 	if (StrEqual(text[startidx], "!jm_teleport", false))
-	{
-		return Plugin_Handled;
-	}
-	if (StrEqual(text[startidx], "!jm_saveloc", false))
 	{
 		return Plugin_Handled;
 	}
@@ -649,10 +677,6 @@ public Action:cmdSay(client, const String:command[], args)
 			return Plugin_Handled;
 		}
 		Hardcore(client);
-	}
-	if (StrEqual(text[startidx], "!ja_help", false))
-	{
-		JumpHelp(client);
 	}
 	if (StrEqual(text[startidx], "/s", false))
 	{
@@ -674,8 +698,13 @@ public Action:cmdSay(client, const String:command[], args)
 	}
 	if (StrEqual(text[startidx], "/restart", false))
 	{
-		ResetPlayerPos(client);
+		if(databaseConfigured)
+		{
+			ResetPlayerPos(client);
+		}
 		EraseLocs(client);
+		TF2_RespawnPlayer(client);
+		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 		return Plugin_Handled;
 	}
 	if (StrEqual(text[startidx], "/ja_tele", false))
@@ -691,10 +720,6 @@ public Action:cmdSay(client, const String:command[], args)
 		return Plugin_Handled;
 	}
 	if (StrEqual(text[startidx], "/jm_teleport", false))
-	{
-		return Plugin_Handled;
-	}
-	if (StrEqual(text[startidx], "/jm_saveloc", false))
 	{
 		return Plugin_Handled;
 	}
@@ -716,11 +741,6 @@ public Action:cmdSay(client, const String:command[], args)
 			return Plugin_Handled;
 		}
 		Hardcore(client);
-		return Plugin_Handled;
-	}
-	if (StrEqual(text[startidx], "/ja_help", false))
-	{
-		JumpHelp(client);
 		return Plugin_Handled;
 	}
 	return Plugin_Continue;
@@ -798,7 +818,9 @@ SaveLoc(client)
 
 		GetClientAbsOrigin(client, g_fOrigin[client]);
 		GetClientAbsAngles(client, g_fAngles[client]);
-		GetPlayerData(client);
+		if(databaseConfigured){
+			GetPlayerData(client);
+		}
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Location");
 	}
 }
@@ -1109,6 +1131,8 @@ public Action:cmdRestart(client, args)
 	
 	EraseLocs(client);
 	ResetPlayerPos(client);
+	TF2_RespawnPlayer(client);
+	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	return Plugin_Handled;
 }
 SendToStart(client)
@@ -1117,8 +1141,11 @@ SendToStart(client)
 	{
 		return;
 	}
-
-	EraseLocs(client);
+	for(new j = 0; j < 8; j++)
+	{
+		g_bCPTouched[client][j] = false;
+		g_iCPsTouched[client] = 0;
+	}
 	g_bUsedReset[client] = true;
 
 	TF2_RespawnPlayer(client);
@@ -1247,6 +1274,11 @@ stock GetValidClassNum(String:class[])
 }
 public JumpListHandler(Handle:menu, MenuAction:action, client, item)
 {
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return;
+	}
 	decl String:MenuInfo[64];
 	if (action == MenuAction_Select)
 	{
@@ -1524,27 +1556,22 @@ public Action:eventPlayerSpawn(Handle:event, const String:name[], bool:dontBroad
 	}
 	
 	if (g_bUsedReset[client])
-	{
-		ReloadPlayerData(client);
+	{	
+		if(databaseConfigured)
+		{
+			ReloadPlayerData(client);
+		}
 		g_bUsedReset[client] = false;
 		return;
 	}
-	LoadPlayerData(client);
+	if(databaseConfigured){
+		LoadPlayerData(client);
+	}
 }
 /*****************************************************************************************************************
 												Timers
 *****************************************************************************************************************/
-public Action:timerMapSettings(Handle:timer, any:client)
-{
-	if (g_hDatabase == INVALID_HANDLE)
-	{
-		LogError("Can't load map settings database error.");
-		return Plugin_Handled;
-	}
-	
-	LoadMapCFG();
-	return Plugin_Handled;
-}
+
 public Action:timerTeam(Handle:timer, any:client)
 {
 	if (client == 0)

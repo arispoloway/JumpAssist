@@ -1,4 +1,3 @@
-//#include "jumpassist/database.sp"
 
 new Handle:HudDisplayForward;
 new Handle:HudDisplayASD;
@@ -123,6 +122,11 @@ public Action:cmdGetClientKeys(client, args)
 }
 public Action:cmdChangeSkeysColor(client, args)
 {
+	//if(!databaseConfigured)
+	//{
+	//	PrintToChat(client, "No database configured - cannot save key colors");
+	//	return Plugin_Handled;
+	//}
 	decl String:red[4], String:blue[4], String:green[4], String:query[512], String:steamid[32];
 	if (args < 1)
 	{

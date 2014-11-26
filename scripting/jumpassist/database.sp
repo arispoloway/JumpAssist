@@ -15,6 +15,8 @@ new bool:g_bUnkillable[MAXPLAYERS+1];
 new bool:g_bRegen = false;
 new bool:g_bLateLoad = false;
 
+new bool:databaseConfigured;
+
 new g_iCPs, g_iForceTeam = 1;
 new g_iCPsTouched[MAXPLAYERS+1];
 new g_iMapClass = -1;
@@ -77,11 +79,12 @@ public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 { 
 	if (hndl == INVALID_HANDLE)
 	{ 
-		LogError("Database failure: %s", error);
-		SetFailState("Error: %s", error);
+		PrintToServer("Invalid database configuration, assuming none");
+		databaseConfigured = false;
 	}
 	else
 	{
+		databaseConfigured = true;
 		g_hDatabase = hndl;
 		if (g_bLateLoad)
 		{
@@ -163,8 +166,10 @@ public SQL_OnLoadPlayerProfile(Handle:owner, Handle:hndl, const String:error[], 
 
 	if (hndl == INVALID_HANDLE)
 	{ 
-		LogError("OnLoadPlayerProfile() - Query failed! %s", error); 
+		LogError("Something bad happened");
+		
 		return false;
+		
 	}
 	if (SQL_GetRowCount(hndl))
 	{
@@ -192,16 +197,6 @@ public SQL_OnLoadPlayerProfile(Handle:owner, Handle:hndl, const String:error[], 
 			Format(fovcmd, sizeof(fovcmd), "sm_fov %i", PlayerFOV);
 			if (IsClientConnected(client)) { FakeClientCommand(client, fovcmd); }
 		}
-		
-		// TFC Map support.
-		if (!g_bRegen)
-		{
-			g_bHardcore[client] = false;
-			g_bHPRegen[client] = true;
-			g_bAmmoRegen[client] = false;
-			g_bLoadedPlayerSettings[client] = true;
-			return true;
-		}
 
 		if (HP == 1) { g_bHPRegen[client] = true; } else { g_bHPRegen[client] = false; }
 		if (Ammo == 1) { g_bAmmoRegen[client] = true; } else { g_bAmmoRegen[client] = false; }
@@ -209,16 +204,18 @@ public SQL_OnLoadPlayerProfile(Handle:owner, Handle:hndl, const String:error[], 
 		
 		g_bLoadedPlayerSettings[client] = true;
 		return true;
-	}
-	else {
+	}else {
 		// No profile
 		if (IsValidClient(client))
 		{
 			decl String:SteamID[32]; GetClientAuthString(client, SteamID, sizeof(SteamID));
-			CreatePlayerProfile(client, SteamID);
+			if(databaseConfigured){
+				CreatePlayerProfile(client, SteamID);
+			}
 		}
 		return false;
 	}
+	
 }
 public SQL_OnCreatePlayerProfile(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
@@ -245,6 +242,7 @@ public SQL_OnMenuSendToLocation(Handle:owner, Handle:hndl, const String:error[],
 	} 
 	else if (SQL_GetRowCount(hndl)) 
 	{
+		SQL_FetchRow(hndl);
 		decl Float:g_fLoc[3], Float:g_fPosVec[3], Float:g_fPosAng[3];
 		decl String:g_sJumpName[MAX_NAME_LENGTH], String:g_sClientName[MAX_NAME_LENGTH];
 		GetClientName(client, g_sClientName, sizeof(g_sClientName));
@@ -594,7 +592,16 @@ LoadPlayerProfile(client, String:SteamID[])
 	decl String:query[1024];
 
 	Format(query, sizeof(query), "SELECT * FROM `player_profiles` WHERE SteamID = '%s'", SteamID);
-	SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerProfile, query, client);
+	if(databaseConfigured)
+	{
+		SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerProfile, query, client);
+	}else
+	{
+		g_bHPRegen[client] = false;
+		g_bAmmoRegen[client] = false;
+		g_bHardcore[client] = false;
+		g_bLoadedPlayerSettings[client] = true;
+	}
 }
 JumpList(client)
 {
@@ -644,6 +651,11 @@ CreatePlayerProfile(client, String:SteamID[])
 }
 public Action:cmdAddTele(client, args)
 {
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
 	if (args < 1)
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "AddTele_Help");
@@ -662,6 +674,11 @@ public Action:cmdAddTele(client, args)
 }
 public Action:SendToLocation(client, args)
 {
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
 	if (GetConVarBool(g_hPluginEnabled))
 	{
 		if (args < 2)
@@ -702,6 +719,11 @@ public Action:SendToLocation(client, args)
 }
 public Action:cmdSetMy(client, args)
 {
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
 	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Handled; }
 	if (args < 1) 
 	{
@@ -849,6 +871,11 @@ public Action:cmdSetMy(client, args)
 }
 public Action:cmdMapSet(client, args)
 {
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
 	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Handled; }
 	if(args < 2) 
 	{
