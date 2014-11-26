@@ -509,6 +509,6 @@
 	}
 	"Found_Jumps"
 	{
-		"en"			"Found Jumps:"
+		"en"			"Found Locations:"
 	}
 }

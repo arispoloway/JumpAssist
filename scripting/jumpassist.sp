@@ -32,7 +32,11 @@
 	*
 	*
 	* UNOFICIAL UPDATES
-	* 0.7.1 - Regen is working better and skeys has less delay. Also general bugfixes - Author - talkingmelon
+	* 0.7.1 - Regen is working better and skeys has less delay. Control points should work properly.
+	*		JA can now be used without a database configured.
+	*		Restart works properly. 
+	*		The system for saving locations for admins is now working properly
+	*		Also general bugfixes - Author - talkingmelon
 	*
 	*
 	*
@@ -43,7 +47,7 @@
 	* Support for jtele with one argument
 	*
 	* BUGS:
-	* None reported.
+	* I'm sure there are plenty
 	**********************************************************************************************************************************
 	
 	
@@ -308,10 +312,23 @@ public Action:cmdJAHelp(client, args)
 	PrintToChat(client, "Put either ! or / in front of each command");
 	PrintToChat(client, "! - Prints to chat, / - Hidden from chat");
 	PrintToChat(client, "************COMMANDS**************");
+	PrintToChat(client, "regen <on|off> - Sets ammo & health regen");
+	PrintToChat(client, "ammo - Toggles ammo regen");
+	PrintToChat(client, "health - Toggles health regen");
+	PrintToChat(client, "undo - Reverts your last save");
+	PrintToChat(client, "skeys_color <R> <G> <B> - Skeys color");
+	PrintToChat(client, "skeys - Shows key presses on the screen");
 	PrintToChat(client, "save or s - Saves your position");
-	PrintToChat(client, "tele or t- Teleports you to your saved position");
-	PrintToChat(client, "reset or r- Restarts you on the map");
+	PrintToChat(client, "tele or t - Teleports you to your saved position");
+	PrintToChat(client, "reset or r - Restarts you on the map");
 	PrintToChat(client, "restart - Deletes your save and restarts you");
+	if(IsUserAdmin(client)){
+		PrintToChat(client, "**********ADMIN COMMANDS**********");
+		PrintToChat(client, "mapset - Change map settings");
+		PrintToChat(client, "addtele - Add a teleport location");
+		PrintToChat(client, "jatele - Teleport a user to a location");
+	}
+	
 
 	
 	return;
@@ -579,7 +596,6 @@ public Action:cmdGotoClient(client, args)
 }
 public Action:cmdReset(client, args)
 {
-	PrintToChat(client, "here");
 	if (GetConVarBool(g_hPluginEnabled))
 	{
 		if (skillsrank)
@@ -590,16 +606,13 @@ public Action:cmdReset(client, args)
 				return Plugin_Handled;
 			}
 		}
-		if (!IsClientObserver(client))
+		if (IsClientObserver(client))
 		{
 			return Plugin_Handled;
 		}
 		
 		SendToStart(client);
 		g_bUsedReset[client] = true;
-	
-		TF2_RespawnPlayer(client);
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_SentToStart");
 	}
 	return Plugin_Handled;
 }
@@ -1132,7 +1145,6 @@ public Action:cmdRestart(client, args)
 	EraseLocs(client);
 	ResetPlayerPos(client);
 	TF2_RespawnPlayer(client);
-	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	return Plugin_Handled;
 }
 SendToStart(client)
@@ -1141,11 +1153,7 @@ SendToStart(client)
 	{
 		return;
 	}
-	for(new j = 0; j < 8; j++)
-	{
-		g_bCPTouched[client][j] = false;
-		g_iCPsTouched[client] = 0;
-	}
+
 	g_bUsedReset[client] = true;
 
 	TF2_RespawnPlayer(client);
