@@ -364,8 +364,8 @@ public SQL_OnReloadPlayerData(Handle:owner, Handle:hndl, const String:error[], a
 				new len = strlen(g_sCaps[client]);
 				for (new i = 0; i <= len; i++)
 				{
-					g_bCPTouched[client][i] = true;
-					g_iCPsTouched[client]++;
+					//g_bCPTouched[client][i] = true;
+					//g_iCPsTouched[client]++;
 				}
 			}
 		}

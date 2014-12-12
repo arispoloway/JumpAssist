@@ -11,9 +11,15 @@ new g_iSkeysRed[MAXPLAYERS+1];
 new g_iSkeysGreen[MAXPLAYERS+1];
 new g_iSkeysBlue[MAXPLAYERS+1];
 
+new Float:g_iSkeysXLoc[MAXPLAYERS+1];
+new Float:g_iSkeysYLoc[MAXPLAYERS+1];
+
 new String:wasBack[MAXPLAYERS+1];
 new String:wasMoveRight[MAXPLAYERS+1];
 new String:wasMoveLeft[MAXPLAYERS+1];
+
+new Float:defaultXLoc = 0.54;
+new Float:defaultYLoc = 0.40;
 
 public OnProfileLoaded(client, red, green, blue)
 {
@@ -22,6 +28,22 @@ public OnProfileLoaded(client, red, green, blue)
 	g_iSkeysBlue[client] = blue;
 
 }
+
+public SetAllSkeysDefaults(){
+	for(new i = 0; i < MAXPLAYERS+1; i++){
+		SetSkeysDefaults(i);
+	}
+
+}
+
+public SetSkeysDefaults(client){
+	g_iSkeysXLoc[client] = defaultXLoc;
+	g_iSkeysYLoc[client] = defaultYLoc;
+}
+
+
+
+
 
 public OnGameFrame()
 {
@@ -43,10 +65,10 @@ public OnGameFrame()
 
 			if (g_iButtons[iClientToShow] & IN_FORWARD)
 			{
-				SetHudTextParams(0.60, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i]+0.06, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayForward, "W");
 			} else {
-				SetHudTextParams(0.60, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i]+0.06, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayForward, "-");
 			}
 			
@@ -74,36 +96,37 @@ public OnGameFrame()
 					Format(wasMoveRight[iClientToShow], sizeof(wasMoveRight), "-");
 				}
 				Format(g_sButtons, sizeof(g_sButtons), "%s %s %s", wasMoveLeft[iClientToShow], wasBack[iClientToShow], wasMoveRight[iClientToShow]);
-				SetHudTextParams(0.58, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i] + 0.04, g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayASD, g_sButtons);
 			} else {
 				decl String:g_sButtons[64]; Format(g_sButtons, sizeof(g_sButtons), "- - -");
-				SetHudTextParams(0.58, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i]+0.04, g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayASD, g_sButtons);
 			}
 			if (g_iButtons[iClientToShow] & IN_DUCK)
 			{
-				SetHudTextParams(0.64, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i]+0.1, g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayDuck, "Duck");
 			}
 			if (g_iButtons[iClientToShow] & IN_JUMP)
 			{
-				SetHudTextParams(0.64, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i] + 0.1, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "Jump");
 				
 			}
 			if (g_iButtons[iClientToShow] & IN_ATTACK)
 			{
-				SetHudTextParams(0.54, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "M1");
 				
 			}
 			if (g_iButtons[iClientToShow] & IN_ATTACK2)
 			{
-				SetHudTextParams(0.54, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "M2");
 				
 			}
+			//.54 x def and .4 y def
 		}
 	}
 	
@@ -163,4 +186,29 @@ public Action:cmdChangeSkeysColor(client, args)
 	JA_SendQuery(query, client);
 
 	return Plugin_Handled;
+}
+
+public Action:cmdChangeSkeysLoc(client, args){
+	if (args != 2)
+	{
+		PrintToChat(client, "\x01[\x03JA\x01] This command requires 2 arguments");
+		return Plugin_Handled;
+	}
+
+	new String:arg1[16], String:arg2[16];
+	new Float:xLoc, Float:yLoc;
+
+	GetCmdArg(1, arg1, sizeof(arg1));
+	GetCmdArg(2, arg2, sizeof(arg2));
+	xLoc = StringToFloat(arg1);
+	yLoc = StringToFloat(arg2);
+	if(xLoc >= 1.0 || yLoc >= 1.0 || xLoc <= 0.0 || yLoc <= 0.0){
+		PrintToChat(client, "\x01[\x03JA\x01] Both arguments must be between 0 and 1");
+		return Plugin_Handled;
+	}
+	g_iSkeysXLoc[client] = xLoc;
+	g_iSkeysYLoc[client] = yLoc;
+
+	return Plugin_Continue;
+
 }

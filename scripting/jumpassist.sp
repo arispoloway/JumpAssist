@@ -64,20 +64,18 @@
 	*		- Tried to fix sounds (pls)
 	*		- r_list command added
 	*
-	*
+	* 0.7.8 - Ammo regen after plugin reload working
+	*		- skeys_loc now allows you to set the location of skeys on the screen
 	*
 	* TODO:
 	* SPEC SUPPORT FOR r_info
 	* TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED	
-	* SOUND ON CP - I think this is fixed but it's very odd	
-	* RACE LIST
+	* SOUND ON CP - I think this is fixed but it's very odd
 	* Better help menu	
-	* move skeys around the screen with commands
 	* rematch typa thing
 	* save pos before start of race then restore after
 	* Polish for release.
 	* Support for jtele with one argument
-	* 
 	*
 	*
 	* BUGS:
@@ -144,7 +142,7 @@
 #define REQUIRE_PLUGIN
 
 
-#define PLUGIN_VERSION "0.7.7"
+#define PLUGIN_VERSION "0.7.8"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by talkingmelon"
 
@@ -238,6 +236,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_tele", cmdTele, "Teleports you to your current saved location.");
 	RegConsoleCmd("sm_skeys", cmdGetClientKeys, "Toggle showing a clients key's.");
 	RegConsoleCmd("sm_skeys_color", cmdChangeSkeysColor, "Changes the color of the text for skeys."); //cannot whether the database is configured or not
+	RegConsoleCmd("sm_skeys_loc", cmdChangeSkeysLoc, "Changes the color of the text for skeys.");
 	RegConsoleCmd("sm_superman", cmdUnkillable, "Makes you strong like superman.");
 	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
 	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
@@ -308,6 +307,18 @@ public OnPluginStart()
 
 	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
 	
+	for(new i = 0; i < MAXPLAYERS+1; i++){
+		if (IsValidClient(i))
+		{
+			g_iClientWeapons[i][0] = GetPlayerWeaponSlot(i, TFWeaponSlot_Primary);
+			g_iClientWeapons[i][1] = GetPlayerWeaponSlot(i, TFWeaponSlot_Secondary);
+			g_iClientWeapons[i][2] = GetPlayerWeaponSlot(i, TFWeaponSlot_Melee);
+		}
+	}
+
+
+	SetAllSkeysDefaults();
+
 	if (LibraryExists("updater"))
     {
         Updater_AddPlugin(UPDATE_URL);
@@ -409,6 +420,7 @@ public OnClientDisconnect(client)
 	{
 		LeaveRace(client);
 	}
+	SetSkeysDefaults(client);
 	
 }
 public OnClientPutInServer(client)
