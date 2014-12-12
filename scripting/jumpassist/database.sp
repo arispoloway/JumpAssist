@@ -15,6 +15,8 @@ new bool:g_bUnkillable[MAXPLAYERS+1];
 new bool:g_bRegen = false;
 new bool:g_bLateLoad = false;
 
+
+
 new bool:databaseConfigured;
 
 new g_iCPs, g_iForceTeam = 1;
@@ -45,21 +47,21 @@ ConnectToDatabase()
 RunDBCheck()
 {
 	decl String:error[255], String:query[512];
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY auto_increment, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL, `Capped` VARCHAR(32))");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL, `Capped` VARCHAR(32))");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (player_saves) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_profiles` (`ID` integer PRIMARY KEY auto_increment NOT NULL, `SteamID` text NOT NULL, `Health` integer NOT NULL DEFAULT 0, `Ammo` integer NOT NULL DEFAULT 0, `Hardcore` integer NOT NULL DEFAULT 0, `PlayerFOV` integer NOT NULL DEFAULT 90, `SKEYS_RED_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_GREEN_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_BLUE_COLOR`  INTEGER NOT NULL DEFAULT 255)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_profiles` (`ID` integer PRIMARY KEY AUTO_INCREMENT NOT NULL, `SteamID` text NOT NULL, `Health` integer NOT NULL DEFAULT 0, `Ammo` integer NOT NULL DEFAULT 0, `Hardcore` integer NOT NULL DEFAULT 0, `PlayerFOV` integer NOT NULL DEFAULT 90, `SKEYS_RED_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_GREEN_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_BLUE_COLOR`  INTEGER NOT NULL DEFAULT 255)");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (player_profiles) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `map_settings` (`ID` integer PRIMARY KEY auto_increment NOT NULL, `Map` text NOT NULL, `Team` int NOT NULL, `LockCPs` int NOT NULL, `Class` int NOT NULL)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `map_settings` (`ID` integer PRIMARY KEY AUTO_INCREMENT NOT NULL, `Map` text NOT NULL, `Team` int NOT NULL, `LockCPs` int NOT NULL, `Class` int NOT NULL)");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
@@ -79,7 +81,7 @@ public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 { 
 	if (hndl == INVALID_HANDLE)
 	{ 
-		PrintToServer("Invalid database configuration, assuming none");
+		PrintToServer("[JumpAssist] Invalid database configuration, assuming none");
 		databaseConfigured = false;
 	}
 	else
@@ -396,12 +398,12 @@ public SQL_OnLoadPlayerData(Handle:owner, Handle:hndl, const String:error[], any
 			new len = strlen(g_sCaps[client]);
 			for (new i = 0; i <= len; i++)
 			{
-				g_bCPTouched[client][i] = true;
-				g_iCPsTouched[client]++;
+				//g_bCPTouched[client][i] = true; TURNING OFF HTESE LINES FOR NOW
+				//g_iCPsTouched[client]++;
 			}
 		}
 
-		if (!g_bHardcore[client])
+		if (!g_bHardcore[client] && !IsClientRacing(client))
 		{
 			Teleport(client);
 		}
@@ -430,7 +432,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 		g_bBeatTheMap[client] = false;
 
 		TF2_RespawnPlayer(client);
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
+		//PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 		return;
 	} 
 	else 
@@ -438,7 +440,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 		g_bBeatTheMap[client] = false;
 		EraseLocs(client);
 		TF2_RespawnPlayer(client);
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
+		//PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 		return;
 	}
 }
@@ -492,6 +494,7 @@ GetPlayerData(client)
 }
 SavePlayerData(client) 
 { 
+	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:sMap[64];
 	
 	GetClientAuthString(client, sSteamID, sizeof(sSteamID));
@@ -561,6 +564,7 @@ DeletePlayerData(client)
 }
 ReloadPlayerData(client) 
 {
+	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
 
 	GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
@@ -574,6 +578,7 @@ ReloadPlayerData(client)
 }
 LoadPlayerData(client) 
 {
+	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
 
 	GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
@@ -581,6 +586,7 @@ LoadPlayerData(client)
 
 	new sTeam = GetClientTeam(client);
 	new class = int:TF2_GetPlayerClass(client);
+
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 	SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerData, sQuery, client, DBPrio_High);

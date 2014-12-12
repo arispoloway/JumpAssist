@@ -43,10 +43,10 @@ public OnGameFrame()
 
 			if (g_iButtons[iClientToShow] & IN_FORWARD)
 			{
-				SetHudTextParams(0.80, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(0.60, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayForward, "W");
 			} else {
-				SetHudTextParams(0.80, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(0.60, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayForward, "-");
 			}
 			
@@ -74,22 +74,34 @@ public OnGameFrame()
 					Format(wasMoveRight[iClientToShow], sizeof(wasMoveRight), "-");
 				}
 				Format(g_sButtons, sizeof(g_sButtons), "%s %s %s", wasMoveLeft[iClientToShow], wasBack[iClientToShow], wasMoveRight[iClientToShow]);
-				SetHudTextParams(0.78, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(0.58, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayASD, g_sButtons);
 			} else {
 				decl String:g_sButtons[64]; Format(g_sButtons, sizeof(g_sButtons), "- - -");
-				SetHudTextParams(0.78, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(0.58, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayASD, g_sButtons);
 			}
 			if (g_iButtons[iClientToShow] & IN_DUCK)
 			{
-				SetHudTextParams(0.84, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(0.64, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayDuck, "Duck");
 			}
 			if (g_iButtons[iClientToShow] & IN_JUMP)
 			{
-				SetHudTextParams(0.84, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				SetHudTextParams(0.64, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "Jump");
+				
+			}
+			if (g_iButtons[iClientToShow] & IN_ATTACK)
+			{
+				SetHudTextParams(0.54, 0.40, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				ShowSyncHudText(i, HudDisplayJump, "M1");
+				
+			}
+			if (g_iButtons[iClientToShow] & IN_ATTACK2)
+			{
+				SetHudTextParams(0.54, 0.45, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
+				ShowSyncHudText(i, HudDisplayJump, "M2");
 				
 			}
 		}
@@ -122,11 +134,7 @@ public Action:cmdGetClientKeys(client, args)
 }
 public Action:cmdChangeSkeysColor(client, args)
 {
-	//if(!databaseConfigured)
-	//{
-	//	PrintToChat(client, "No database configured - cannot save key colors");
-	//	return Plugin_Handled;
-	//}
+	
 	decl String:red[4], String:blue[4], String:green[4], String:query[512], String:steamid[32];
 	if (args < 1)
 	{
@@ -143,7 +151,14 @@ public Action:cmdChangeSkeysColor(client, args)
 	}
 
 	g_iSkeysRed[client] = StringToInt(red); g_iSkeysBlue[client] = StringToInt(blue); g_iSkeysGreen[client] = StringToInt(green);
-
+	
+	//if(!databaseConfigured)
+	//{
+	//	PrintToChat(client, "No database configured - cannot save key colors");
+	//	return Plugin_Handled;
+	//}
+	
+	//This will throw a server error but its no big deal
 	Format(query, sizeof(query), "UPDATE `player_profiles` SET SKEYS_RED_COLOR=%i, SKEYS_GREEN_COLOR=%i, SKEYS_BLUE_COLOR=%i WHERE steamid = '%s'", g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], steamid);
 	JA_SendQuery(query, client);
 
