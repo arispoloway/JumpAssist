@@ -66,6 +66,15 @@
 	*
 	* 0.7.8 - Ammo regen after plugin reload working
 	*		- skeys_loc now allows you to set the location of skeys on the screen
+	*		- Actually fixed no alert on cp problem
+	*		- r_list and r_info now work for spectators of a race
+	*
+	*
+	*
+	*
+	*
+	*
+	*
 	*
 	* TODO:
 	* SPEC SUPPORT FOR r_info
@@ -76,7 +85,7 @@
 	* save pos before start of race then restore after
 	* Polish for release.
 	* Support for jtele with one argument
-	*
+	* Support for sequence of cps 
 	*
 	* BUGS:
 	* I'm sure there are plenty
@@ -88,6 +97,7 @@
 	* Change to spec during race
 	*
 	* TESTERS
+	* - Froyo
 	* - Zigzati
 	* - Elie
 	* - Fossiil
@@ -97,7 +107,6 @@
 	* - Fractal
 	* - Torch
 	* - Velks
-	* - Froyo
 	* - Jondy
 	* - Pizza Butt 8)
 	* - 0beezy
@@ -755,12 +764,28 @@ public Action:cmdRaceList(client, args){
 	if (!IsValidClient(client)) { return; }
 
 	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
+	new iClientToShow, iObserverMode;
 	if (!IsClientRacing(client))
 	{
-		PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!"); 
-		return;
+		if(IsClientObserver(client)){
+			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
+			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget"); 
+
+			if(!IsClientRacing(iClientToShow)){
+				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!"); 
+				return;
+			}
+			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) { 
+				return; 
+			}
+		}else{
+			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!"); 
+			return;
+		}
+	}else{
+		iClientToShow = client;
 	}
-	new race = g_bRace[client];
+	new race = g_bRace[iClientToShow];
 	new String:leader[32];
 	new String:leaderFormatted[32];
 	new String:racerNames[32];
@@ -770,7 +795,7 @@ public Action:cmdRaceList(client, args){
 	new Handle:panel = CreatePanel();
 	new bool:space;
 
-	GetClientName(g_bRace[client], leader, sizeof(leader));
+	GetClientName(g_bRace[iClientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "%s's Race", leader);
 	DrawPanelText(panel, leaderFormatted);
 
@@ -834,29 +859,29 @@ public Action:cmdRaceInfo(client, args)
 	if (!IsValidClient(client)) { return; }
 
 	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
+	new iClientToShow, iObserverMode;
 	if (!IsClientRacing(client))
 	{
-		PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!"); 
-		return;
+		if(IsClientObserver(client)){
+			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
+			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget"); 
+
+			if(!IsClientRacing(iClientToShow)){
+				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!"); 
+				return;
+			}
+			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) { 
+				return; 
+			}
+		}else{
+			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!"); 
+			return;
+		}
+	}else{
+		iClientToShow = client;
 	}
 
 
-	//SPEC INFO FOR RACES TOO NOT WORKING YET
-
-	// if(IsClientObserver(client)){
-		
-	// 	new iClientToShow, iObserverMode;
-	// 	iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-	// 	iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget"); 
-	// 	if(!IsClientRacing(iClientToShow)){
-	// 		PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!"); 
-	// 		return;
-	// 	}
-	// 	if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) { 
-	// 		return; 
-	// 	}
-	// 	client = iClientToShow;
-	// }
 
 
 	new String:leader[32];
@@ -866,31 +891,31 @@ public Action:cmdRaceInfo(client, args)
 	new String:ammoRegen[32];
 	new String:classForce[32];
 
-	GetClientName(g_bRace[client], leader, sizeof(leader));
+	GetClientName(g_bRace[iClientToShow], leader, sizeof(leader));
 	Format(leaderFormatted, sizeof(leaderFormatted), "Race Host: %s", leader);
 
-	if(g_bRaceHealthRegen[g_bRace[client]]){
+	if(g_bRaceHealthRegen[g_bRace[iClientToShow]]){
 		healthRegen = "HP Regen: Enabled";
 	}else{
 		healthRegen = "HP Regen: Disabled";
 	}
-	if(g_bRaceHealthRegen[g_bRace[client]]){
+	if(g_bRaceHealthRegen[g_bRace[iClientToShow]]){
 		ammoRegen = "Ammo Regen: Enabled";
 	}else{
 		ammoRegen = "Ammo Regen: Disabled";
 	}
 
-	if(GetRaceStatus(client) == 1){
+	if(GetRaceStatus(iClientToShow) == 1){
 		status = "Race Status: Waiting for start";
-	}else if(GetRaceStatus(client) == 2){
+	}else if(GetRaceStatus(iClientToShow) == 2){
 		status = "Race Status: Starting";
-	}else if(GetRaceStatus(client) == 3){
+	}else if(GetRaceStatus(iClientToShow) == 3){
 		status = "Race Status: Racing";
-	}else if(GetRaceStatus(client) == 4){
+	}else if(GetRaceStatus(iClientToShow) == 4){
 		status = "Race Status: Waiting for finshers";
 	}
 
-	if(g_bRaceClassForce[g_bRace[client]]){
+	if(g_bRaceClassForce[g_bRace[iClientToShow]]){
 		classForce = "Class Force: Enabled";
 	}else{
 		classForce = "Class Force: Disabled";
