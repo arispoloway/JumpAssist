@@ -69,17 +69,16 @@
 	*		- Actually fixed no alert on cp problem
 	*		- r_list and r_info now work for spectators of a race
 	*
-	*
-	*
-	*
+	* 0.7.9 - Fixed undo bug that let you change classes and teams and still have your old teleport
+	*		- Timer sould work in all time zones properly now
+	*		- Fixed calling for medic giving regen during race
 	*
 	*
 	*
 	*
 	* TODO:
-	* SPEC SUPPORT FOR r_info
 	* TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED	
-	* SOUND ON CP - I think this is fixed but it's very odd
+	* SOUND ON CP - I think this is fixed but it's very odd 
 	* Better help menu	
 	* rematch typa thing
 	* save pos before start of race then restore after
@@ -95,6 +94,22 @@
 	*	L 12/02/2014 - 23:07:57: [SM] Displaying call stack trace for plugin "jumpassist.smx":
 	*	L 12/02/2014 - 23:07:57: [SM]   [0]  Line 1590, scripting\jumpassist.sp::timerTeam()
 	* Change to spec during race
+	*
+	* Race with 3 people - 2 finish - leader is one of them and starts new race inviting the other finisher and starts
+	* Race keeps other person in it - may not have transfered leadership/may not leave race on !race if you are in one    --- I think i fixed this bug but is is difficult to test
+	*
+	*
+	*
+	*
+	*
+	*
+	*
+	*
+	*
+	*
+	*
+	*
+	*
 	*
 	* TESTERS
 	* - Froyo
@@ -151,7 +166,7 @@
 #define REQUIRE_PLUGIN
 
 
-#define PLUGIN_VERSION "0.7.8"
+#define PLUGIN_VERSION "0.7.9"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by talkingmelon"
 
@@ -161,18 +176,8 @@
 /*
 	Core Includes
 */
-#include "jumpassist/skeys.sp"
-#include "jumpassist/skillsrank.sp"
-#include "jumpassist/database.sp"
-#include "jumpassist/sound.sp"
 
-new Handle:g_hWelcomeMsg;
-new Handle:g_hCriticals; 
-new Handle:g_hSuperman;
-new Handle:g_hSentryLevel;
-new Handle:g_hCheapObjects;
-new Handle:g_hAmmoCheat;
-new Handle:g_hFastBuild;
+
 
 new g_bRace[MAXPLAYERS+1];
 new g_bRaceStatus[MAXPLAYERS+1];
@@ -193,6 +198,24 @@ new bool:g_bRaceAmmoRegen[MAXPLAYERS+1];
 new bool:g_bRaceHealthRegen[MAXPLAYERS+1];
 new bool:g_bRaceClassForce[MAXPLAYERS+1];
 new g_bRaceSpec[MAXPLAYERS+1];
+
+
+
+
+#include "jumpassist/skeys.sp"
+#include "jumpassist/skillsrank.sp"
+#include "jumpassist/database.sp"
+#include "jumpassist/sound.sp"
+
+new Handle:g_hWelcomeMsg;
+new Handle:g_hCriticals; 
+new Handle:g_hSuperman;
+new Handle:g_hSentryLevel;
+new Handle:g_hCheapObjects;
+new Handle:g_hAmmoCheat;
+new Handle:g_hFastBuild;
+
+
 
 new Handle:waitingForPlayers;
 
@@ -380,6 +403,7 @@ public OnMapStart()
 {
 	if (GetConVarBool(g_hPluginEnabled))
 	{
+
 		for(new i = 0; i < MAXPLAYERS+1 ; i++){
 			ResetRace(i); 
 		}
@@ -1337,7 +1361,7 @@ stock LeaveRace(client){
 			if(HasRaceStarted(race)){
 					for (new i = 1; i <= GetMaxClients(); i++)
 					{
-						if (IsClientInRace(i, race) && IsClientRacing(i))
+						if (IsClientInRace(i, race) && IsClientRacing(i) && !IsRaceLeader(i, race))
 						{
 							new newRace = i;
 							new a[32];
@@ -1514,32 +1538,51 @@ stock bool:IsClientSpectatingRace(client, race){
 
 stock String:TimeFormat(Float:timeTaken){
 
-	new String:formatTime[255];
-	new String:formatTime1[255];
 	new intTimeTaken;
 	new Float:ms;
 	new String:msFormat[128];
 	new String:msFormatFinal[128];
 	new String:final[128];
+	new seconds;
+	new minutes;
+	new hours;
+	new String:secondsString[128];
+	new String:minutesString[128];
+	new String:hoursString[128];
 
 	ms = timeTaken-RoundToZero(timeTaken);
 	Format(msFormat, sizeof(msFormat), "%.3f", ms);
 	strcopy(msFormatFinal, sizeof(msFormatFinal), msFormat[2]);
-	intTimeTaken = RoundToZero(timeTaken) + 450000;
-	FormatTime(formatTime1, sizeof(formatTime1), "%X", intTimeTaken);
-	//if(RoundToZero(timeTaken) < 60){
-	//	strcopy(formatTime, sizeof(formatTime), formatTime1[6]);
-	//}else 
-	if(RoundToZero(timeTaken) < 3540){
-		strcopy(formatTime, sizeof(formatTime), formatTime1[3]);
-	}else{
-		strcopy(formatTime, sizeof(formatTime), formatTime1[0]);
-	}
+	intTimeTaken = RoundToZero(timeTaken);
+	seconds = intTimeTaken % 60;
+	minutes = (intTimeTaken-seconds)/60;
+	hours = (intTimeTaken-seconds - minutes * 60)/60;
 
-	Format(final, sizeof(final), "%s:%s", formatTime, msFormatFinal);
+	secondsString = FormatTimeComponent(seconds);
+	minutesString = FormatTimeComponent(minutes);
+	hoursString = FormatTimeComponent(hours);
+
+	if(hours != 0){
+		Format(final, sizeof(final), "%s:%s:%s:%s", hoursString, minutesString, secondsString, msFormatFinal);
+	}else{
+		Format(final, sizeof(final), "%s:%s:%s", minutesString, secondsString, msFormatFinal);
+	}
 
 	return final;
 }
+
+stock String:FormatTimeComponent(time){
+
+	new String:final[8];
+
+	if(time > 9){
+		Format(final, sizeof(final), "%d", time);
+	}else{
+		Format(final, sizeof(final), "0%d", time);
+	}
+	return final;
+}
+
 
 
 stock bool:IsRaceOver(client){
@@ -2923,6 +2966,15 @@ public Action:eventPlayerChangeClass(Handle:event, const String:name[], bool:don
 	new class = int:TF2_GetPlayerClass(client);
 	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(g_iMapClass));
 
+	g_fLastSavePos[client][0] = 0.0;
+	g_fLastSavePos[client][1] = 0.0;
+	g_fLastSavePos[client][2] = 0.0;
+
+	g_iClientWeapons[client][0] = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+	g_iClientWeapons[client][1] = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+	g_iClientWeapons[client][2] = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+
 	if (g_iMapClass != -1)
 	{
 		if (class != g_iMapClass)
@@ -2953,6 +3005,11 @@ public Action:eventPlayerChangeTeam(Handle:event, const String:name[], bool:dont
 	} else {
 		CreateTimer(0.1, timerTeam, client);
 	}
+
+	g_fLastSavePos[client][0] = 0.0;
+	g_fLastSavePos[client][1] = 0.0;
+	g_fLastSavePos[client][2] = 0.0;
+
 	return Plugin_Handled;
 }
 public Action:eventPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)

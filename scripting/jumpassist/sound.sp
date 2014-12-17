@@ -30,7 +30,7 @@ public Action:HookVoice(UserMsg:msg_id, Handle:bf, const players[], playersNum, 
 	
 	if(IsPlayerAlive(client) && IsValidClient(client) && GetConVarBool(g_hPluginEnabled))
 	{
-		if((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && !g_bSpeedRun[client])
+		if((vMenu1 == 0) && (vMenu2 == 0) && !g_bHardcore[client] && !g_bSpeedRun[client] && (!g_bRace[client] || g_bRaceTime[client] != 0.0))
 		{
 			ReSupply(client, g_iClientWeapons[client][0]);
 			ReSupply(client, g_iClientWeapons[client][1]);
