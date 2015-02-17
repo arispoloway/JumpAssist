@@ -195,7 +195,7 @@
 #define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
 //#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
 
-#define UPDATE_URL_BRANCH "dev"
+#define UPDATE_URL_BRANCH "master"
 #define UPDATE_URL_FILE   "updatefile.txt"
 
 new String:g_URLMap[256] = "";
