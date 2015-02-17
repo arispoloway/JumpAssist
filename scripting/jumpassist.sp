@@ -86,6 +86,10 @@
 	*		 - Fixed SQL ReloadPlayerData bug (maybe?)
 	*
 	*
+	* 0.8.0 - Moved upater to github repository
+		  - imported jumptracer
+		  - added cvar ja_update_branch for server operators to select updating from
+		  - from dev or master.  Must be set in server.cfg.
 	*
 	* TODO:
 
@@ -180,7 +184,6 @@
 #include <tf2>
 #include <tf2_stocks>
 #include <sdkhooks>
-#include <steamtools>
 
 #if !defined REQUIRE_PLUGIN
 #define REQUIRE_PLUGIN
@@ -190,6 +193,7 @@
 #define AUTOLOAD_EXTENSIONS
 #endif
 
+#include <steamtools>
 #include <updater>
 
 #define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
