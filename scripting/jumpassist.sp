@@ -1,4 +1,9 @@
-/*																	TODO
+/*																	
+	SHOUTOUT TO MEOWMEOW
+
+
+
+																TODO
 	**********************************************************************************************************************************
 	* Done:
 	* 0.6.1b - Minor performance improvement. (Constantly checking if the map had regen on every player profile loaded. Changed to check once per map.)
@@ -73,18 +78,35 @@
 	*		- Timer sould work in all time zones properly now
 	*		- Fixed calling for medic giving regen during race
 	*
+	* 0.7.10 - Added !spec command
+	*		 - Fixed potential for tele notification spam
+	*		 - Improved the usability of the help menu
+	*
+	* 0.7.11 - Fixed timer team bug 
+	*		 - Fixed SQL ReloadPlayerData bug (maybe?)
 	*
 	*
 	*
 	* TODO:
+
+	* give race a better UI		
+	* R_LIST TIMES AFTER PLAYER DC
+	*LOG TO SERVER WHEN THE MAPSET COMMAND IS USED 
+	* STARTING A SECOND RACE WITH THE FIRST ONE STILL IN PROGRESS OFTEN GIVES - YOU ARE NOT THE RACE LOBBY LEADER if everyone types !r_leave it works
+
+
+	* maybe leave race when not leader of old race to start new one not work?
+	* Plugin cvar enabled for all functions
+	* ADD CVAR TO TOGGLE FINISH ALERT TO SERVER / FIX SPAM POSSIBLITY - SPEC POINTS REACHED BUG THING
+	* PLAYER GOT TO CP IN TIME NOT JUST PLAYER GOT TO CP - WOULD MAKE THE TIME PART GOODOODOOODOD
 	* TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED	
-	* SOUND ON CP - I think this is fixed but it's very odd 
-	* Better help menu	
 	* rematch typa thing
 	* save pos before start of race then restore after
 	* Polish for release.
 	* Support for jtele with one argument
 	* Support for sequence of cps 
+	*
+	*
 	*
 	* BUGS:
 	* I'm sure there are plenty
@@ -131,7 +153,7 @@
 																	NOTES	
 	**********************************************************************************************************************************
 	*
-	* You must have a mysql or sqlite database named jumpassist and configure configured in /addons/sourcemod/configs/databases.cfg
+	* You must have a mysql or sqlite database named jumpassist and configure it in /addons/sourcemod/configs/databases.cfg
 	*
 	* Once the database is set up, an example configuration would look like:
 	*
@@ -166,7 +188,7 @@
 #define REQUIRE_PLUGIN
 
 
-#define PLUGIN_VERSION "0.7.9"
+#define PLUGIN_VERSION "0.7.11"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by talkingmelon"
 
@@ -273,9 +295,8 @@ public OnPluginStart()
 	RegConsoleCmd("sm_jumptf", cmdJumpTF, "Shows the jump.tf website.");
 	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
 	RegConsoleCmd("sm_jumpassist", cmdJumpAssist, "Shows the forum page for JumpAssist.");
+	//RegConsoleCmd("sm_spec", cmdSpec, "Sets you as spectator of a player.");
 	
-	RegConsoleCmd("sm_race_help", cmdRaceHelp, "Shows race commands.");
-	RegConsoleCmd("sm_r_help", cmdRaceHelp, "Shows race commands.");
 	RegConsoleCmd("sm_race_list", cmdRaceList, "Lists players and their times in a race.");
 	RegConsoleCmd("sm_r_list", cmdRaceList, "Lists players and their times in a race.");
 	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
@@ -1574,7 +1595,6 @@ stock String:TimeFormat(Float:timeTaken){
 stock String:FormatTimeComponent(time){
 
 	new String:final[8];
-
 	if(time > 9){
 		Format(final, sizeof(final), "%d", time);
 	}else{
@@ -1655,23 +1675,39 @@ stock bool:IsRaceOver(client){
 
 
 
+// public Action:cmdSpec(client, args){
+// 	if(!IsValidClient(client)){return Plugin_Handled; }
+// 	if(args == 0){
+// 		PrintToChat(client, "\x01[\x03JA\x01] No target player selected.");
+// 		return Plugin_Handled;
+// 	}
+
+// 	new String:arg1[32];
+
+// 	GetCmdArg(1, arg1, sizeof(arg1));
+// 	new target = FindTarget(client, arg1, true, false);
+// 	if(target == -1){
+// 		return Plugin_Handled;
+// 	}else{
+// 		if(target == client){
+// 			PrintToChat(client, "\x01[\x03JA\x01] You may not spectate yourself.");
+// 			return Plugin_Handled;
+// 		}
+// 		if(IsClientObserver(target)){
+// 			PrintToChat(client, "\x01[\x03JA\x01] You may not spectate a spectator.");
+// 			return Plugin_Handled;
+// 		}
+// 		if(!IsClientObserver(client)){
+// 			ChangeClientTeam(client, 1);
+// 			ForcePlayerSuicide(client);
+// 		}
+// 		SetEntPropEnt(client, Prop_Send, "m_hObserverTarget", g_bRace[target]);
+// 		SetEntProp(client, Prop_Send, "m_iObserverMode", 4);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// 	}
+// 	return Plugin_Continue;
+// }
 
 
 
@@ -1714,68 +1750,95 @@ public Action:cmdToggleHardcore(client, args)
 
 public Action:cmdJAHelp(client, args)
 {
-	if (!IsValidClient(client)) { return; }
-	ReplyToCommand(client, "");
-	ReplyToCommand(client, "");
-	ReplyToCommand(client, "*************JA HELP**************");
-	ReplyToCommand(client, "Put either ! or / in front of each command");
-	ReplyToCommand(client, "! - Prints to chat, / - Hidden from chat");
-	ReplyToCommand(client, "************COMMANDS**************");
-	ReplyToCommand(client, "jumptf - Shows the jump.tf website");
-	ReplyToCommand(client, "forums - Shows the jump.tf forums");
-	ReplyToCommand(client, "jumpassist - Shows the jumpassist forum page");
-	ReplyToCommand(client, "regen <on|off> - Sets ammo & health regen");
-	ReplyToCommand(client, "ammo - Toggles ammo regen");
-	ReplyToCommand(client, "health - Toggles health regen");
-	ReplyToCommand(client, "undo - Reverts your last save");
-	ReplyToCommand(client, "skeys_color <R> <G> <B> - Skeys color");
-	ReplyToCommand(client, "skeys - Shows key presses on the screen");
-	ReplyToCommand(client, "save or s - Saves your position");
-	ReplyToCommand(client, "tele or t - Teleports you to your saved position");
-	ReplyToCommand(client, "reset or r - Restarts you on the map");
-	ReplyToCommand(client, "restart - Deletes your save and restarts you");
 	if(IsUserAdmin(client)){
 		ReplyToCommand(client, "**********ADMIN COMMANDS**********");
 		ReplyToCommand(client, "mapset - Change map settings");
 		ReplyToCommand(client, "addtele - Add a teleport location");
 		ReplyToCommand(client, "jatele - Teleport a user to a location");
 	}
-	
 
+	new Handle:panel;
+	panel = CreatePanel();
+	SetPanelTitle(panel, "Help Menu:");
+	DrawPanelItem(panel, "Saving and Teleporting");
+	DrawPanelItem(panel, "Regen");
+	DrawPanelItem(panel, "Skeys");
+	DrawPanelItem(panel, "Racing");
+	DrawPanelItem(panel, "Miscellaneous");
+	DrawPanelText(panel, " ");
+	DrawPanelItem(panel, "Exit");
+
+	
+	SendPanelToClient(panel, client, JAHelpHandler, 15);
+	
+	CloseHandle(panel);
 	
 	return;
 
 }
 
-public Action:cmdRaceHelp(client, args)
-{
-	if (!IsValidClient(client)) { return; }
-	ReplyToCommand(client, "");
-	ReplyToCommand(client, "");
-	ReplyToCommand(client, "************RACE HELP*************");
-	ReplyToCommand(client, "!r_set - Change settings of a race.");
-	ReplyToCommand(client, "     <classforce|cf|ammo|health|regen>");
-	ReplyToCommand(client, "     <on|off>");
-	ReplyToCommand(client, "!r_info - Provides info about the current race.");
-	ReplyToCommand(client, "!r_list - Lists race players and their times");
-	ReplyToCommand(client, "!r_spec - Spectates a race.");
-	ReplyToCommand(client, "!race - Initialize a race and select final CP.");
-	ReplyToCommand(client, "!r_inv - Invite players to the race.");
-	ReplyToCommand(client, "!r_start - Start the race.");
-	ReplyToCommand(client, "!r_leave - Leave a race.");
-	if(IsUserAdmin(client)){
-		ReplyToCommand(client, "**********ADMIN COMMANDS**********");
-		ReplyToCommand(client, "!s_race - Invites everyone in the server to a race");
+public JAHelpHandler(Handle:menu, MenuAction:action, param1, param2){
+	//1 is client
+	//2 is choice
+	new client = param1;
+	
+
+	if(param2 < 1 || param2 == 6){
+		return;
 	}
+	new Handle:panel;
+	panel = CreatePanel();
+	if(param2 == 1){	
+		SetPanelTitle(panel, "Save Help");
+		DrawPanelText(panel, "!save or !s - Saves your position");
+		DrawPanelText(panel, "!tele or !t - Teleports you to your saved position");
+		DrawPanelText(panel, "!undo - Reverts your last save");
+		DrawPanelText(panel, "!reset or !r - Restarts you on the map");
+		DrawPanelText(panel, "!restart - Deletes your save and restarts you");
+	}else if(param2 == 2){
+		SetPanelTitle(panel, "Regen Help");
+		DrawPanelText(panel, "!regen <on|off> - Sets ammo & health regen");
+		DrawPanelText(panel, "!ammo - Toggles ammo regen");
+		DrawPanelText(panel, "!health - Toggles health regen");
+	}else if(param2 == 3){
+		SetPanelTitle(panel, "Skeys Help");
+		DrawPanelText(panel, "!skeys - Shows key presses on the screen");
+		DrawPanelText(panel, "!skeys_color <R> <G> <B> - Skeys color");
+		DrawPanelText(panel, "!skeys_loc <X> <Y> - Sets skeys location with x and y values from 0 to 1");
 
-	
+	}else if(param2 == 4){
+		SetPanelTitle(panel, "Racing Help");
+		DrawPanelText(panel, "!race - Initialize a race and select final CP.");
+		DrawPanelText(panel, "!r_info - Provides info about the current race.");
+		DrawPanelText(panel, "!r_inv - Invite players to the race.");
+		DrawPanelText(panel, "!r_set - Change settings of a race.");
+		DrawPanelText(panel, "     <classforce|cf|ammo|health|regen>");
+		DrawPanelText(panel, "     <on|off>");
+		DrawPanelText(panel, "!r_list - Lists race players and their times");
+		DrawPanelText(panel, "!r_spec - Spectates a race.");
+		DrawPanelText(panel, "!r_start - Start the race.");
+		DrawPanelText(panel, "!r_leave - Leave a race.");
 
+	}else if(param2 == 5){
+		DrawPanelText(panel, "!jumpassist - Shows the JumpAssist forum page.");
+		DrawPanelText(panel, "!jumptf - Shows the Jump.tf website.");
+		DrawPanelText(panel, "!forums - Shows the Jump.tf forums.");
+
+	}
+	DrawPanelText(panel, " ");
+	DrawPanelItem(panel, "Back");
+	DrawPanelItem(panel, "Exit");
+	SendPanelToClient(panel, client, HelpMenuHandler, 15);
 	
-	return;
+	CloseHandle(panel);
 
 }
 
-
+public HelpMenuHandler(Handle:menu, MenuAction:action, param1, param2){
+	if(param2 == 1){
+		cmdJAHelp(param1, 0);
+	}
+}
 
 
 
@@ -2755,7 +2818,10 @@ public Native_JA_ReloadPlayerSettings(Handle:plugin, numParams)
 	}
 
 	g_bSpeedRun[client] = false;
-	ReloadPlayerData(client);
+	if(databaseConfigured)
+	{
+		ReloadPlayerData(client);
+	}
 	return true;
 }
 /*****************************************************************************************************************
@@ -3001,7 +3067,8 @@ public Action:eventPlayerChangeTeam(Handle:event, const String:name[], bool:dont
 
 	if (team == 1 || g_iForceTeam == 1 || team == g_iForceTeam)
 	{
-		EraseLocs(client);
+		g_fOrigin[client][0] = 0.0; g_fOrigin[client][1] = 0.0; g_fOrigin[client][2] = 0.0;
+		g_fAngles[client][0] = 0.0; g_fAngles[client][1] = 0.0; g_fAngles[client][2] = 0.0;
 	} else {
 		CreateTimer(0.1, timerTeam, client);
 	}
@@ -3070,7 +3137,9 @@ public Action:timerTeam(Handle:timer, any:client)
 		return;
 	}
 	EraseLocs(client);
-	ChangeClientTeam(client, g_iForceTeam);
+	if(IsClientInGame(client)){
+		ChangeClientTeam(client, g_iForceTeam);
+	}
 }
 public Action:timerRegen(Handle:timer, any:client)
 {
@@ -3097,7 +3166,6 @@ public Action:WelcomePlayer(Handle:timer, any:client)
 
 	PrintToChat(client, "\x01[\x03JA\x01] Welcome to \x03%s\x01. This server is running \x03%s\x01 by \x03%s\x01.", sHostname, PLUGIN_NAME, PLUGIN_AUTHOR);
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Welcome_2", PLUGIN_NAME, cLightGreen, cDefault, cLightGreen, cDefault);
-	PrintToChat(client, "\x01[\x03JA\x01] Type \x03!r_help\x01 for help with racing");
 }
 /*****************************************************************************************************************
 											ConVars Hooks

@@ -567,13 +567,14 @@ ReloadPlayerData(client)
 	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
 
-	GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
+	Steam_GetCSteamIDForClient(client, sSteamID, sizeof(sSteamID));
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
 	new class = int:TF2_GetPlayerClass(client);
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
+	//PrintToServer(sSteamID);
 	SQL_TQuery(g_hDatabase, SQL_OnReloadPlayerData, sQuery, client, DBPrio_High);
 }
 LoadPlayerData(client) 
@@ -581,7 +582,7 @@ LoadPlayerData(client)
 	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
 
-	GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
+	Steam_GetCSteamIDForClient(client, sSteamID, sizeof(sSteamID)); 
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
@@ -589,6 +590,7 @@ LoadPlayerData(client)
 
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
+	//PrintToServer(sSteamID);
 	SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerData, sQuery, client, DBPrio_High);
 }
 LoadPlayerProfile(client, String:SteamID[])
