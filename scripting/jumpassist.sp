@@ -194,15 +194,16 @@
 
 #define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
 //#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
+
 #define UPDATE_URL_BRANCH "dev"
 #define UPDATE_URL_FILE   "updatefile.txt"
 
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.7.11"
+#define PLUGIN_VERSION "0.8.0-dev"
 #define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush - Updated by talkingmelon"
+#define PLUGIN_AUTHOR "rush - Updated by talkingmelon, happs"
 
 #define cDefault    0x01
 #define cLightGreen 0x03
