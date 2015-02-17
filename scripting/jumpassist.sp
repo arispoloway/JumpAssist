@@ -182,15 +182,28 @@
 #include <sdkhooks>
 #include <steamtools>
 
-#define UPDATE_URL    "http://71.224.176.158:8080/files/jumpassist/updatefile.txt"
-#undef REQUIRE_PLUGIN
-#include <updater>
+#if !defined REQUIRE_PLUGIN
 #define REQUIRE_PLUGIN
+#endif
 
+#if !defined AUTOLOAD_EXTENSIONS
+#define AUTOLOAD_EXTENSIONS
+#endif
 
-#define PLUGIN_VERSION "0.7.11"
+#include <updater>
+
+#define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
+//#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
+
+#define UPDATE_URL_BRANCH "master"
+#define UPDATE_URL_FILE   "updatefile.txt"
+
+new String:g_URLMap[256] = "";
+new bool:g_bUpdateRegistered = false;
+
+#define PLUGIN_VERSION "0.8.0-dev"
 #define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush - Updated by talkingmelon"
+#define PLUGIN_AUTHOR "rush - Updated by talkingmelon, happs"
 
 #define cDefault    0x01
 #define cLightGreen 0x03
@@ -236,6 +249,7 @@ new Handle:g_hSentryLevel;
 new Handle:g_hCheapObjects;
 new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
+new Handle:hCvarBranch;
 
 
 
@@ -271,6 +285,11 @@ public OnPluginStart()
 	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	decl String:sDesc[128]="";
+	Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
+	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH,
+	sDesc, FCVAR_NOTIFY);
+
 	
 	// Jump Assist console commands
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
@@ -323,6 +342,11 @@ public OnPluginStart()
 
 	// ROOT COMMANDS, they're set to root users for a reason.
 	RegAdminCmd("ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
+#if defined DEBUG
+	RegAdminCmd("ja_update_force", Command_Update, ADMFLAG_RCON, "Forces update check of plugin");
+#endif
+
+
 
 	
 	// Hooks
@@ -372,20 +396,54 @@ public OnPluginStart()
 
 	SetAllSkeysDefaults();
 
-	if (LibraryExists("updater"))
-    {
-        Updater_AddPlugin(UPDATE_URL);
-    }
+	decl String:branch[32]="";
+	GetConVarString(hCvarBranch,branch,sizeof(branch));
+
+	if(!VerifyBranch(branch,sizeof(branch)))
+	{
+		SetConVarString(hCvarBranch,UPDATE_URL_BRANCH);
+#if defined DEBUG
+		LogMessage("Resetting branch to %s", UPDATE_URL_BRANCH);
+#endif
+	}
+
+	Format(g_URLMap,sizeof(g_URLMap),"%s/%s/%s",UPDATE_URL_BASE,branch,UPDATE_URL_FILE);
 	
+	if (LibraryExists("updater"))
+	{
+		Updater_AddPlugin(g_URLMap);
+		g_bUpdateRegistered = true;
+	} else {
+		LogMessage("Updater plugin not found.");
+	}
+
 	ConnectToDatabase();
 	SetDesc();
 }
+
+stock bool:VerifyBranch(String:branch[],len)
+{
+	if(!strcmp(branch,"master"))
+		return true;
+
+	for(new idx; idx < len;++idx)
+	{
+		if(!IsCharAlpha(branch[idx]))
+		{
+			LogError("Invalid branch %s", branch);
+			return false;
+		}
+	}
+	return true;
+}
+
+
 
 public OnLibraryAdded(const String:name[])
 {
     if (StrEqual(name, "updater"))
     {
-        Updater_AddPlugin(UPDATE_URL);
+        Updater_AddPlugin(g_URLMap);
     }
 }
 
@@ -415,8 +473,39 @@ TF2_SetGameType()
 {
 	GameRules_SetProp("m_nGameType", 2);
 }
+
+#if defined DEBUG
+public Action:Command_Update(client,args)
+{
+	if(!LibraryExists("updater")) {
+		ReplyToCommand(client,"updater plugin not found.");
+	} else if(!g_bUpdateRegistered) {
+		ReplyToCommand(client,"Updater not registered.");
+	} else {
+		ReplyToCommand(client,"Force update returned %s", Updater_ForceUpdate() ? "true" : "false");
+	
+	}
+	return Plugin_Handled;
+}
+
+public Action:Updater_OnPluginChecking()
+{
+	LogMessage("Checking for updates.");
+	return Plugin_Continue;
+}
+
+public Action:Updater_OnPluginDownloading()
+{
+	LogMessage("Downloading updates.");
+	return Plugin_Continue;
+}
+
+#endif
+
+
 public Updater_OnPluginUpdated()
 {
+	LogMessage("Update complete.");
 	ReloadPlugin();
 }
 
@@ -2485,6 +2574,12 @@ stock ReSupply(client, iWeapon)
 			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 6);
 			SetAmmo(client, iWeapon, 32);
 		}
+ 		//Begger's bazooka
+		case 730:
+		{
+			SetAmmo(client,iWeapon,20);
+		}
+
 	}
 }
 stock SetAmmo(client, iWeapon, iAmmo)
@@ -2830,9 +2925,9 @@ public Native_JA_ReloadPlayerSettings(Handle:plugin, numParams)
 public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	new client = GetClientOfUserId(GetEventInt(event, "userid")), object = GetEventInt(event, "object"), index = GetEventInt(event, "index");
+	new client = GetClientOfUserId(GetEventInt(event, "userid")), obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
 	
-	if (object == 2)
+	if (obj == 2)
 	{
 		if (GetConVarInt(g_hSentryLevel) == 3)
 		{
