@@ -538,6 +538,11 @@ HookFunc(entity)
 #if defined DEBUG
 	LogMessage("Hooked entity %d",entity);
 #endif
+	SDKUnhook(entity,SDKHook_StartTouch,OnPlayerStartTouchFuncRegenerate);
+	SDKUnhook(entity,SDKHook_Touch,OnPlayerStartTouchFuncRegenerate);
+	SDKUnhook(entity,SDKHook_EndTouch,OnPlayerStartTouchFuncRegenerate);
+
+
 	SDKHook(entity,SDKHook_StartTouch,OnPlayerStartTouchFuncRegenerate);
 	SDKHook(entity,SDKHook_Touch,OnPlayerStartTouchFuncRegenerate);
 	SDKHook(entity,SDKHook_EndTouch,OnPlayerStartTouchFuncRegenerate);
