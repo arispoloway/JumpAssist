@@ -254,6 +254,7 @@ new Handle:g_hCheapObjects;
 new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
 new Handle:hCvarBranch;
+new Handle:hArray_NoFuncRegen;
 
 
 
@@ -363,6 +364,7 @@ public OnPluginStart()
 	HookEvent("player_builtobject", eventPlayerBuiltObj);
 	HookEvent("player_upgradedobject", eventPlayerUpgradedObj);
 	HookEvent("teamplay_round_start", eventRoundStart);
+	HookEvent("post_inventory_application", eventInventoryUpdate);
 
 
 	// ConVar Hooks
@@ -460,6 +462,11 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 
 	g_bLateLoad = late;
 
+	if(late)
+	{
+		Hook_Func_regenerate();
+	}
+
 	return APLRes_Success;
 }
 public OnAllPluginsLoaded()
@@ -513,6 +520,32 @@ public Updater_OnPluginUpdated()
 	ReloadPlugin();
 }
 
+
+
+// Support for beggers bazooka
+Hook_Func_regenerate()
+{
+	new entity = -1;
+	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
+		// Support for concmap*, and quad* maps that are imported from TFC.
+			g_bRegen = true;
+		HookFunc(entity);
+	    }
+}
+
+HookFunc(entity)
+{
+#if defined DEBUG
+	LogMessage("Hooked entity %d",entity);
+#endif
+	SDKHook(entity,SDKHook_StartTouch,OnPlayerStartTouchFuncRegenerate);
+	SDKHook(entity,SDKHook_Touch,OnPlayerStartTouchFuncRegenerate);
+	SDKHook(entity,SDKHook_EndTouch,OnPlayerStartTouchFuncRegenerate);
+}
+
+
+
+
 public OnMapStart()
 {
 	if (GetConVarBool(g_hPluginEnabled))
@@ -545,14 +578,11 @@ public OnMapStart()
 			g_iCPs++;
 		}
 		
-		// Support for concmap*, and quad* maps that are imported from TFC.
-		new entity;
-		while ((entity = FindEntityByClassname(entity, "func_regenerate")) != -1)
-		{
-			g_bRegen = true;
-		}
+		Hook_Func_regenerate();
+
 	}
 }
+
 public OnClientDisconnect(client)
 {
 	if (GetConVarBool(g_hPluginEnabled))
@@ -569,6 +599,12 @@ public OnClientDisconnect(client)
 	}
 	SetSkeysDefaults(client);
 	
+	new idx;
+	if((idx = FindValueInArray(hArray_NoFuncRegen,client)) != -1)
+	{
+		RemoveFromArray(hArray_NoFuncRegen,idx);
+	}
+
 }
 public OnClientPutInServer(client)
 {
@@ -1965,6 +2001,29 @@ stock bool:IsUsingJumper(client)
 	return false;
 }
 
+stock CheckBeggers(iClient)
+{
+	new iWeapon = GetPlayerWeaponSlot(iClient, 0);
+
+	new index = FindValueInArray(hArray_NoFuncRegen,iClient);
+
+        if (IsValidEntity(iWeapon) &&
+		GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex") == 730)
+	{
+		if(index == -1)
+		{
+			PushArrayCell(hArray_NoFuncRegen,iClient);
+#if defined DEBUG
+			LogMessage("Preventing player %d from touching func_regenerate");
+#endif
+		}
+	} else if(index != -1) {
+		RemoveFromArray(hArray_NoFuncRegen,index);
+#if defined DEBUG
+		LogMessage("Allowing player %d to touch func_regenerate");
+#endif
+	}
+}
 
 stock IsStringNumeric(const String:MyString[])
 {
@@ -2926,6 +2985,26 @@ public Native_JA_ReloadPlayerSettings(Handle:plugin, numParams)
 /*****************************************************************************************************************
 												Player Events
 *****************************************************************************************************************/
+public Action:OnPlayerStartTouchFuncRegenerate(int entity, int other)
+{
+	if(other <= MaxClients && GetArraySize(hArray_NoFuncRegen) > 0 && FindValueInArray(hArray_NoFuncRegen,other) != -1)
+	{
+#if defined DEBUG_FUNC_REGEN
+		LogMessage("Entity %d touch %d Prevented",entity,other);
+#endif
+		return Plugin_Handled;
+	}
+
+
+#if defined DEBUG_FUNC_REGEN
+	LogMessage("Entity %d touch %d Allowed",entity,other);
+#endif
+	return Plugin_Continue;
+}
+
+
+
+
 public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
@@ -2960,6 +3039,7 @@ public Action:eventRoundStart(Handle:event, const String:name[], bool:dontBroadc
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 
 	if (g_iLockCPs == 1) { LockCPs(); }
+	Hook_Func_regenerate();
 
 	SetCvarValues();
 }
@@ -3178,6 +3258,14 @@ public Action:eventPlayerChangeTeam(Handle:event, const String:name[], bool:dont
 
 	return Plugin_Handled;
 }
+
+public eventInventoryUpdate(Handle:hEvent, String:strName[], bool:bDontBroadcast)
+{
+	new iClient = GetClientOfUserId(GetEventInt(hEvent, "userid"));
+	if (!IsValidClient(iClient)) return;
+	CheckBeggers(iClient);
+}
+
 public Action:eventPlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
@@ -3210,6 +3298,9 @@ public Action:eventPlayerSpawn(Handle:event, const String:name[], bool:dontBroad
 	{
 		g_bHardcore[client] = false;
 	}
+
+	// Disable func_regenerate if player is using beggers bazooka
+	CheckBeggers(client);
 	
 	if (g_bUsedReset[client])
 	{	
