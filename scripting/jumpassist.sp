@@ -466,11 +466,6 @@ public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
 
 	g_bLateLoad = late;
 
-	if(late)
-	{
-		Hook_Func_regenerate();
-	}
-
 	return APLRes_Success;
 }
 public OnAllPluginsLoaded()
