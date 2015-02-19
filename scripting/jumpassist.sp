@@ -346,9 +346,9 @@ public OnPluginStart()
 	RegAdminCmd("sm_addtele", cmdAddTele, ADMFLAG_GENERIC, "Adds a teleport location for the current map");
 
 	// ROOT COMMANDS, they're set to root users for a reason.
-	RegAdminCmd("ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
+	RegAdminCmd("sm_ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
 #if defined DEBUG
-	RegAdminCmd("ja_update_force", Command_Update, ADMFLAG_RCON, "Forces update check of plugin");
+	RegAdminCmd("sm_ja_update_force", Command_Update, ADMFLAG_RCON, "Forces update check of plugin");
 #endif
 
 
@@ -433,16 +433,18 @@ stock bool:VerifyBranch(String:branch[],len)
 {
 	if(!strcmp(branch,"master"))
 		return true;
+	if(!strcmp(branch,"dev"))
+		return true;
 
-	for(new idx; idx < len;++idx)
-	{
-		if(!IsCharAlpha(branch[idx]))
-		{
-			LogError("Invalid branch %s", branch);
-			return false;
-		}
-	}
-	return true;
+	// for(new idx; idx < len;++idx)
+	// {
+	// 	if(!IsCharAlpha(branch[idx]))
+	// 	{
+	// 		LogError("Invalid branch %s", branch);
+	// 		return false;
+	// 	}
+	// }
+	return false;
 }
 
 
