@@ -166,7 +166,7 @@ public Action:cmdChangeSkeysColor(client, args)
 	}
 
 	GetCmdArg(1, red, sizeof(red)), GetCmdArg(2, green, sizeof(green)), GetCmdArg(3, blue, sizeof(blue));
-	GetClientAuthString(client, steamid, sizeof(steamid));
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
 	if (!IsStringNumeric(red) || !IsStringNumeric(blue) || !IsStringNumeric(green))
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Numeric_Invalid");

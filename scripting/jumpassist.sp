@@ -528,9 +528,9 @@ Hook_Func_regenerate()
 	new entity = -1;
 	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
 		// Support for concmap*, and quad* maps that are imported from TFC.
-			g_bRegen = true;
+		g_bRegen = true;
 		HookFunc(entity);
-	    }
+	}
 }
 
 HookFunc(entity)
@@ -621,7 +621,7 @@ public OnClientPutInServer(client)
 			SDKHook(client, SDKHook_WeaponEquipPost, SDKHook_OnWeaponEquipPost);
 		}
 		// Load the player profile.
-		decl String:sSteamID[64]; GetClientAuthString(client, sSteamID, sizeof(sSteamID));
+		decl String:sSteamID[64]; GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID));
 
 		LoadPlayerProfile(client, sSteamID);
 
@@ -2313,7 +2313,7 @@ Teleport(client)
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
 	}
-	new g_iClass = int:TF2_GetPlayerClass(client);
+	new g_iClass = view_as<int>TF2_GetPlayerClass(client);
 	new g_iTeam = GetClientTeam(client);
 	decl String:g_sClass[32], String:g_sTeam[32];
 	new Float:g_vVelocity[3];
@@ -2394,7 +2394,7 @@ Hardcore(client)
 	}
 
 	new String:steamid[32];
-	GetClientAuthString(client, steamid, sizeof(steamid));
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
 
 	if (!IsClientInGame(client))
 	{
@@ -3052,7 +3052,7 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 
-	new client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = int:TF2_GetPlayerClass(client), entity;
+	new client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = view_as<int>TF2_GetPlayerClass(client), entity;
 	decl String:g_sClass[33], String:playerName[64], String:cpName[32], String:s_area[32];
 	
 	if (!g_bCPTouched[client][area] || g_bRace[client] != 0)
@@ -3211,9 +3211,9 @@ public Action:eventPlayerChangeClass(Handle:event, const String:name[], bool:don
 	
 	g_bUnkillable[client] = false;
 	
-	GetClientAuthString(client, steamid, sizeof(steamid));
+	GetClientAuthId(client,AuthId_Steam2, steamid, sizeof(steamid));
 
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(g_iMapClass));
 
 	g_fLastSavePos[client][0] = 0.0;

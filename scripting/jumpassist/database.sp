@@ -210,7 +210,7 @@ public SQL_OnLoadPlayerProfile(Handle:owner, Handle:hndl, const String:error[], 
 		// No profile
 		if (IsValidClient(client))
 		{
-			decl String:SteamID[32]; GetClientAuthString(client, SteamID, sizeof(SteamID));
+			decl String:SteamID[32]; GetClientAuthId(client, AuthId_Steam2, SteamID, sizeof(SteamID));
 			if(databaseConfigured){
 				CreatePlayerProfile(client, SteamID);
 			}
@@ -413,7 +413,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 {
 	new client = data; 
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 
 	if (hndl == INVALID_HANDLE) 
 	{ 
@@ -423,7 +423,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 	{
 		decl String:sQuery[256], String:sSteamID[64], String:pMap[32];
 		
-		GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
+		GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID)); 
 		GetCurrentMap(pMap, sizeof(pMap));
 		
 		Format(sQuery, sizeof(sQuery), "DELETE FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
@@ -482,11 +482,11 @@ GetPlayerData(client)
 { 
 	decl String:sQuery[256], String:sSteamID[64], String:pMap[32];
 	
-	GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
+	GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID)); 
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 	
 	Format(sQuery, sizeof(sQuery), "SELECT * FROM `player_saves` WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 
@@ -497,11 +497,11 @@ SavePlayerData(client)
 	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:sMap[64];
 	
-	GetClientAuthString(client, sSteamID, sizeof(sSteamID));
+	GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID));
 	GetCurrentMap(sMap, sizeof(sMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 	new Float:SavePos1[MAXPLAYERS+1][3];
 	new Float:SavePos2[MAXPLAYERS+1][3];
 	
@@ -524,11 +524,11 @@ UpdatePlayerData(client)
 { 
 	decl String:sQuery[1024], String:sSteamID[64], String:sMap[64];
 	
-	GetClientAuthString(client, sSteamID, sizeof(sSteamID));
+	GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID));
 	GetCurrentMap(sMap, sizeof(sMap));
 	
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 
 	new Float:SavePos1[MAXPLAYERS+1][3];
 	new Float:SavePos2[MAXPLAYERS+1][3];
@@ -552,11 +552,11 @@ DeletePlayerData(client)
 {  
 	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
 
-	GetClientAuthString(client, sSteamID, sizeof(sSteamID)); 
+	GetClientAuthId(client, AuthId_Steam2, sSteamID, sizeof(sSteamID)); 
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 
 	Format(sQuery, sizeof(sQuery), "DELETE FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 
@@ -571,7 +571,7 @@ ReloadPlayerData(client)
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 	//PrintToServer(sSteamID);
@@ -586,7 +586,7 @@ LoadPlayerData(client)
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = int:TF2_GetPlayerClass(client);
+	new class = view_as<int>TF2_GetPlayerClass(client);
 
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
@@ -739,7 +739,7 @@ public Action:cmdSetMy(client, args)
 		return Plugin_Handled;
 	}
 	decl String:arg1[MAX_NAME_LENGTH], String:arg2[MAX_NAME_LENGTH], String:SteamID[32];
-	GetClientAuthString(client, SteamID, sizeof(SteamID));
+	GetClientAuthId(client, AuthId_Steam2, SteamID, sizeof(SteamID));
 	GetCmdArg(1, arg1, sizeof(arg1)), GetCmdArg(2, arg2, sizeof(arg2));
 	
 	if (StrEqual(arg1[0], "hardcore", false))
