@@ -389,6 +389,8 @@ public OnPluginStart()
 	HudDisplayJump = CreateHudSynchronizer();
 
 	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
+
+	hArray_NoFuncRegen = CreateArray();
 	
 	for(new i = 0; i < MAXPLAYERS+1; i++){
 		if (IsValidClient(i))
