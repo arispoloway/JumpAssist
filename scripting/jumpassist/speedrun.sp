@@ -116,6 +116,12 @@ public SQL_OnCheckpointAdded(Handle:owner, Handle:hndl, const String:error[], an
 	} 
 	else if (SQL_GetRowCount(hndl)) 
 	{
+		PrintToChat(client, "\x01[\x03JA\x01] Zone creation was successful");
+		ShowZone(client, zoneTop[numZones], zoneBottom[numZones]);
+		numZones++;
+	} 
+	else 
+	{
 		PrintToChat(client, "\x01[\x03JA\x01] Zone creation failed");
 		zoneBottom[numZones][0] = 0.0;
 		zoneBottom[numZones][1] = 0.0;
@@ -123,12 +129,7 @@ public SQL_OnCheckpointAdded(Handle:owner, Handle:hndl, const String:error[], an
 		zoneTop[numZones][0] = 0.0;
 		zoneTop[numZones][1] = 0.0;
 		zoneTop[numZones][2] = 0.0;
-	} 
-	else 
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] Zone creation was successful");
-		ShowZone(client, zoneTop[numZones], zoneBottom[numZones]);
-		numZones++;
+
 	} 
 }
 
@@ -171,17 +172,17 @@ public Action:cmdSetStart(client, args){
 	new String:query[1024], String:cmap[64];
 	GetCurrentMap(cmap, sizeof(cmap));
 
-	Format(query, sizeof(query), "IF EXISTS (SELECT * FROM startlocs WHERE MapName='%s') UPDATE startlocs SET (x=%f,y=%f,z=%f,xang=%f,yang=%f,zang=%f,) WHERE MapName='%s' ELSE INSERT INTO startlocs (MapName, x, y, z, xang, yang, zang) VALUES(%s, %f, %f, %f, %f, %f, %f)", cmap, x, y, z, xang, yang, zang, cmap, cmap, x, y, z, xang, yang, zang);
-
+	Format(query, sizeof(query), "INSERT INTO startlocs (MapName, x, y, z, xang, yang, zang) VALUES('%s', '%f', '%f', '%f', '%f', '%f', '%f') ON DUPLICATE KEY UPDATE x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f'", cmap, x, y, z, xang, yang, zang, x, y, z, xang, yang, zang);
+	PrintToServer(query);
+	
 	SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
-
 	return Plugin_Continue;
 
 
 }
 
 public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], any:data){
-
+	
 	new client = data;
 	
 	if (hndl == INVALID_HANDLE) 
@@ -190,6 +191,12 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 	} 
 	else if (SQL_GetRowCount(hndl)) 
 	{
+		
+		PrintToChat(client, "\x01[\x03JA\x01] Start location successfully set");
+	} 
+	else 
+	{
+		PrintToServer(error);
 		PrintToChat(client, "\x01[\x03JA\x01] Start location failed to be set");
 		startLoc[0] = 0.0;
 		startLoc[1] = 0.0;
@@ -198,10 +205,7 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 		startAng[0] = 0.0;
 		startAng[1] = 0.0;
 		startAng[2] = 0.0;
-	} 
-	else 
-	{
-		PrintToChat(client, "\x01[\x03JA\x01] Start location successfully set");
+		
 	} 
 }
 
