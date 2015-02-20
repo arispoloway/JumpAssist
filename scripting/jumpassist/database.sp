@@ -90,6 +90,8 @@ RunDBCheck()
 		SQL_UnlockDatabase(g_hDatabase);
 	}
 	SQL_UnlockDatabase(g_hDatabase);
+	
+	LoadMapSpeedrunInfo();
 }
 public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 { 

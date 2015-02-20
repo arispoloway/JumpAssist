@@ -1,25 +1,209 @@
 
-new Float:startLoc[3];
-new Float:startAng[3];
+new Float:startLoc[3], Float:startAng[3], Float:sLoc[3], Float:sAng[3], Float:bottomLoc[3], Float:topLoc[3];
 
 new Float:zoneBottom[32][3];
 new Float:zoneTop[32][3];
-new numZones = 0;
+new Float:checkPointTimes[32][32];
+new Float:startTime[32];
+new bool:isSpeedrunning[32];
 
 new g_BeamSprite;
 new g_HaloSprite;
-new String:cMap[64];
 
-new Float:x, Float:y, Float:z, Float:xang, Float:yang, Float:zang;
+new String:cMap[64];
+new numZones = 0;
 
 new Handle:hSpeedrunEnabled;
 
-new Float:bottomLoc[3], Float:topLoc[3];
+
+public Action:cmdSpeedrunRestart(client,args){
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot speedrun from rcon");
+		return Plugin_Handled;
+	}
+	if(IsClientObserver(client)){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot speedrun as spectator");
+		return Plugin_Handled;
+	}
+	if(!IsSpeedrunMap()){
+		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
+		return Plugin_Handled;
+	}
+
+	new Float:v[3];
+	TeleportEntity(client,startLoc,startAng,v);
+	return Plugin_Continue;
+}
+public Action:cmdToggleSpeedrun(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot speedrun from rcon");
+		return Plugin_Handled;
+	}
+	if(IsClientObserver(client)){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot speedrun as spectator");
+		return Plugin_Handled;
+	}
+	if(!IsSpeedrunMap()){
+		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
+		return Plugin_Handled;
+	}
+
+	isSpeedrunning[client] = !isSpeedrunning[client];
+	if(isSpeedrunning[client]){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Speedrunning enabled");
+		new Float:v[3];
+		TeleportEntity(client,startLoc,startAng,v);
+	}else{
+		ReplyToCommand(client, "\x01[\x03JA\x01] Speedrunning disabled");
+	}
+	return Plugin_Continue;
+}
+
+public Action:cmdSTest(client,args){
+	if(IsSpeedrunMap()){
+		PrintToChat(client,"Yes");
+	}else{
+		PrintToChat(client,"No");
+
+	}
+}
 
 
-//ON MAP START IT WILL NEED TO LOAD ALL THIS IN
+
+public Action:cmdShowZones(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot show zones from rcon");
+		return Plugin_Handled;
+	}
+	if(IsClientObserver(client)){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot show zones as spectator");
+		return Plugin_Handled;
+	}
+
+	for(int i = 0; i < numZones; i++){
+		ShowZone(client, i);
+	}
+
+	ReplyToCommand(client, "\x01[\x03JA\x01] Showing all zones");
+	return Plugin_Continue;
+
+}
+
+
+
+public Action:ClearMapSpeedrunInfo(){
+	for(int i = 0; i < 32; i++){
+		zoneBottom[i][0] = 0.0;
+		zoneBottom[i][1] = 0.0;
+		zoneBottom[i][2] = 0.0;
+		zoneTop[i][0] = 0.0;
+		zoneTop[i][1] = 0.0;
+		zoneTop[i][2] = 0.0;
+
+		for(int j = 0; j < 32; j++){
+			checkPointTimes[i][j] = 0.0;
+
+		}
+		startTime[i] = 0.0;
+		isSpeedrunning[i] = false;	
+	}
+
+	startLoc[0] = 0.0;
+	startLoc[1] = 0.0;
+	startLoc[2] = 0.0;
+	startAng[0] = 0.0;
+	startAng[1] = 0.0;
+	startAng[2] = 0.0;
+}
+
 public Action:LoadMapSpeedrunInfo(){
+	ClearMapSpeedrunInfo();
 
+	new String:query[1024] = "";
+	GetCurrentMap(cMap, sizeof(cMap));
+
+	Format(query, sizeof(query), "SELECT x, y, z, xang, yang, zang FROM startlocs WHERE MapName='%s'", cMap);
+	SQL_TQuery(g_hDatabase, SQL_OnMapStartLocationLoad, query, 0);	
+
+	Format(query, sizeof(query), "SELECT x1, y1, z1, x2, y2, z2 FROM zones WHERE MapName='%s' ORDER BY 'number' ASC", cMap);
+	SQL_TQuery(g_hDatabase, SQL_OnMapZonesLoad, query, 0);
+}
+
+public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
+	
+	if (hndl == INVALID_HANDLE) 
+	{ 
+		LogError("OnMapZonesLoad() - Query failed! %s", error); 
+	} 
+	else if (SQL_GetRowCount(hndl)) 
+	{
+		new numRows = SQL_GetRowCount(hndl);
+
+		for(numZones=0; numZones < numRows; numZones++){
+
+			SQL_FetchRow(hndl);
+			zoneBottom[numZones][0] = SQL_FetchFloat(hndl, 0);
+			zoneBottom[numZones][1] = SQL_FetchFloat(hndl, 1);
+			zoneBottom[numZones][2] = SQL_FetchFloat(hndl, 2);
+			zoneTop[numZones][0] = SQL_FetchFloat(hndl, 3);
+			zoneTop[numZones][1] = SQL_FetchFloat(hndl, 4);
+			zoneTop[numZones][2] = SQL_FetchFloat(hndl, 5);
+		}
+
+	} 
+	else 
+	{
+
+	} 
+}
+
+public SQL_OnMapStartLocationLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
+	
+	if (hndl == INVALID_HANDLE) 
+	{ 
+		LogError("OnMapStartLocationLoad() - Query failed! %s", error); 
+	} 
+	else if (SQL_GetRowCount(hndl)) 
+	{
+		SQL_FetchRow(hndl);
+		startLoc[0] = SQL_FetchFloat(hndl, 0);
+		startLoc[1] = SQL_FetchFloat(hndl, 1);
+		startLoc[2] = SQL_FetchFloat(hndl, 2);
+		startAng[0] = SQL_FetchFloat(hndl, 3);
+		startAng[1] = SQL_FetchFloat(hndl, 4);
+		startAng[2] = SQL_FetchFloat(hndl, 5);
+	} 
+	else 
+	{
+
+
+	} 
 }
 
 
@@ -39,7 +223,11 @@ public Action:cmdAddZone(client,args){
 		return Plugin_Handled;
 	}
 	if(IsClientObserver(client)){
-		ReplyToCommand(client, "[SM] Cannot setup corners as spectator");
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot setup corners as spectator");
+		return Plugin_Handled;
+	}
+	if(numZones == 32){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Maximum zone count reached");
 		return Plugin_Handled;
 	}
 
@@ -75,12 +263,9 @@ public Action:cmdAddZone(client,args){
 			topLoc[1] = loc[1];
 			topLoc[2] = loc[2];
 		}
-
-		//SHOULD MOVE THIS SOMEWHERE ELSE - SPEEDRUN INIT
-		GetCurrentMap(cMap, sizeof(cMap));
+		
 			
 		new String:query[1024];
-
 
 		Format(query, sizeof(query), "INSERT INTO zones VALUES (null, '%d', '%s', '%f', '%f', '%f', '%f', '%f', '%f')", numZones, cMap, bottomLoc[0], bottomLoc[1], bottomLoc[2], topLoc[0], topLoc[1], topLoc[2]);
 		
@@ -95,23 +280,18 @@ public Action:cmdAddZone(client,args){
 		topLoc[1] = 0.0;
 		topLoc[2] = 0.0;
 
-		SQL_TQuery(g_hDatabase, SQL_OnCheckpointAdded, query, client);
+		SQL_TQuery(g_hDatabase, SQL_OnZoneAdded, query, client);
 
-		
 	}
-
 
 	ReplyToCommand(client, "\x01[\x03JA\x01] Corner successfully selected");
 	return Plugin_Continue;
 
-
 }
 
-ShowZone(client, Float:bLoc[3], Float:tLoc[3]){
-	Effect_DrawBeamBoxToClient(client, bLoc, tLoc, g_BeamSprite, g_HaloSprite, 0, 30);
-}
 
-public SQL_OnCheckpointAdded(Handle:owner, Handle:hndl, const String:error[], any:data){
+
+public SQL_OnZoneAdded(Handle:owner, Handle:hndl, const String:error[], any:data){
 
 	new client = data;
 	
@@ -122,7 +302,7 @@ public SQL_OnCheckpointAdded(Handle:owner, Handle:hndl, const String:error[], an
 	else if (!error[0]) 
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] Zone creation was successful");
-		ShowZone(client, zoneTop[numZones], zoneBottom[numZones]);
+		ShowZone(client, numZones);
 		numZones++;
 	} 
 	else 
@@ -164,31 +344,17 @@ public Action:cmdSetStart(client, args){
 	GetClientEyeAngles(client, a);
 
 
-	//SOME OF THIS IS REDUNDANT
-	x = l[0]; 
-	y = l[1]; 
-	z = l[2]; 
 
-	xang = a[0]; 
-	yang = a[1]; 
-	zang = a[2]; 
-
-	startLoc = l;
-	startAng = a;
+	sLoc = l;
+	sAng = a;
 
 	new String:query[1024];
-
-	//SHOULD MOVE THIS SOMEWHERE ELSE - SPEEDRUN INIT
-	GetCurrentMap(cMap, sizeof(cMap));
 
 	Format(query, sizeof(query), "SELECT * FROM startlocs WHERE MapName='%s'", cMap);
 	
 	SQL_TQuery(g_hDatabase, SQL_OnStartLocationCheck, query, client);
 	return Plugin_Continue;
-
-
 }
-//"INSERT INTO startlocs (MapName, x, y, z, xang, yang, zang) VALUES('%s', '%f', '%f', '%f', '%f', '%f', '%f') ON DUPLICATE KEY UPDATE x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f'"
 
 public SQL_OnStartLocationCheck(Handle:owner, Handle:hndl, const String:error[], any:data){
 	
@@ -201,13 +367,13 @@ public SQL_OnStartLocationCheck(Handle:owner, Handle:hndl, const String:error[],
 	} 
 	else if (SQL_GetRowCount(hndl)) 
 	{
-		Format(query, sizeof(query), "UPDATE startlocs SET x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f' WHERE MapName='%s'", x, y, z, xang, yang, zang, cMap);
+		Format(query, sizeof(query), "UPDATE startlocs SET x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f' WHERE MapName='%s'", sLoc[0], sLoc[1], sLoc[2], sAng[0], sAng[1], sAng[2], cMap);
 		SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
 		
 	} 
 	else 
 	{
-		Format(query, sizeof(query), "INSERT INTO startlocs VALUES(null,'%s', '%f','%f','%f','%f','%f','%f');",cMap, x, y, z, xang, yang, zang);
+		Format(query, sizeof(query), "INSERT INTO startlocs VALUES(null,'%s', '%f','%f','%f','%f','%f','%f');",cMap, sLoc[0], sLoc[1], sLoc[2], sAng[0], sAng[1], sAng[2]);
 		SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
 	} 
 }
@@ -229,23 +395,78 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 	{
 		PrintToServer(error);
 		PrintToChat(client, "\x01[\x03JA\x01] Start location failed to set");
-		startLoc[0] = 0.0;
-		startLoc[1] = 0.0;
-		startLoc[2] = 0.0;
+		sLoc[0] = 0.0;
+		sLoc[1] = 0.0;
+		sLoc[2] = 0.0;
 
-		startAng[0] = 0.0;
-		startAng[1] = 0.0;
-		startAng[2] = 0.0;
+		sAng[0] = 0.0;
+		sAng[1] = 0.0;
+		sAng[2] = 0.0;
 		
 	} 
+}
+
+
+
+
+bool:IsSpeedrunMap(){
+	if(zoneBottom[0][0] != 0.0 && zoneBottom[1][0] != 0.0 && startLoc[0] != 0.0){
+		return true;
+	}
+	return false;
+}
+
+bool:IsInZone(client, zone){
+	return IsInRegion(client, zoneBottom[zone], zoneTop[zone]);
+}
+
+bool:IsInRegion(client, Float:bottom[3], Float:upper[3]){
+	decl Float:f[3], Float:e[3], Float:end1[3], Float:end2[3];
+
+	GetEntPropVector(client, Prop_Data, "m_vecOrigin", f);
+	GetClientEyePosition(client, e);
+	if(upper[0] < bottom[0]){
+		end1[0] = upper[0];
+		end2[0] = bottom[0];
+	}else{
+		end1[0] = bottom[0];
+		end2[0] = upper[0];
+	}
+	if(upper[1] < bottom[1]){
+		end1[1] = upper[1];
+		end2[1] = bottom[1];
+	}else{
+		end1[1] = bottom[1];
+		end2[1] = upper[1];
+	}
+	if(upper[2] < bottom[2]){
+		end1[2] = upper[2];
+		end2[2] = bottom[2];
+	}else{
+		end1[2] = bottom[2];
+		end2[2] = upper[2];
+	}
+
+
+	if(f[0] > end1[0] && end2[0] > f[0] && f[1] > end1[1] && end2[1] > f[1] && f[2] > end1[2] && end2[2] > f[2]){
+		return true;
+	}
+	if(e[0] > end1[0] && end2[0] > e[0] && e[1] > end1[1] && end2[1] > e[1] && e[2] > end1[2] && end2[2] > e[2]){
+		return true;
+	}
+
+	return false;
 }
 
 public bool:TraceEntityFilterPlayer(entity, contentsMask, any:data){
 	return entity > MaxClients;
 }  
 
+stock ShowZone(client, zone){
+	Effect_DrawBeamBoxToClient(client, zoneBottom[zone], zoneTop[zone], g_BeamSprite, g_HaloSprite, 0, 30);
+}
 
-//COPIED FROM SMLIB
+//From SMLIB
 stock Effect_DrawBeamBoxToClient(
 	client,
 	const Float:bottomCorner[3],

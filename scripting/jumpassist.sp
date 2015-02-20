@@ -349,6 +349,9 @@ public OnPluginStart()
 
 	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_GENERIC, "Sets the map start location for speedrunning");
 	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_GENERIC, "Adds a checkpoint or end zone for speedrunning");
+	RegConsoleCmd("sm_showzones", cmdShowZones, "Shows all zones of the map");
+	RegConsoleCmd("sm_sr", cmdShowZones, "Shows all zones of the map");
+	RegConsoleCmd("sm_stest", cmdSTest, "REMEMBER TO REMOVE THIS BEFORE PUBLISHING");
 
 	// ROOT COMMANDS, they're set to root users for a reason.
 	RegAdminCmd("sm_ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
@@ -430,9 +433,10 @@ public OnPluginStart()
 	} else {
 		LogMessage("Updater plugin not found.");
 	}
-
+	
 	ConnectToDatabase();
 	SetDesc();
+
 }
 
 stock bool:VerifyBranch(String:branch[],len)
@@ -589,7 +593,9 @@ public OnMapStart()
 		{
 			g_iCPs++;
 		}
-		
+
+		if(databaseConfigured){ LoadMapSpeedrunInfo(); }
+
 		Hook_Func_regenerate();
 
 	}
