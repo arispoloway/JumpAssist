@@ -245,6 +245,7 @@ new g_bRaceSpec[MAXPLAYERS+1];
 #include "jumpassist/skillsrank.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/sound.sp"
+#include "jumpassist/speedrun.sp"
 
 new Handle:g_hWelcomeMsg;
 new Handle:g_hCriticals; 
@@ -255,6 +256,7 @@ new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
 new Handle:hCvarBranch;
 new Handle:hArray_NoFuncRegen;
+
 
 
 
@@ -292,8 +294,8 @@ public OnPluginStart()
 	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	decl String:sDesc[128]="";
 	Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
-	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH,
-	sDesc, FCVAR_NOTIFY);
+	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
+	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "0", "Turns speedrunning on/off", FCVAR_NOTIFY);
 
 	
 	// Jump Assist console commands
@@ -345,6 +347,9 @@ public OnPluginStart()
 	RegAdminCmd("sm_jatele", SendToLocation, ADMFLAG_GENERIC, "Sends a player to the spcified jump.");
 	RegAdminCmd("sm_addtele", cmdAddTele, ADMFLAG_GENERIC, "Adds a teleport location for the current map");
 
+	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_GENERIC, "Sets the map start location for speedrunning");
+	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_GENERIC, "Adds a checkpoint or end zone for speedrunning");
+
 	// ROOT COMMANDS, they're set to root users for a reason.
 	RegAdminCmd("sm_ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
 #if defined DEBUG
@@ -375,6 +380,7 @@ public OnPluginStart()
 	HookConVarChange(g_hSuperman, cvarSupermanChanged);
 	HookConVarChange(g_hSoundBlock, cvarSoundsChanged);
 	HookConVarChange(g_hSentryLevel, cvarSentryLevelChanged);
+	HookConVarChange(hSpeedrunEnabled, cvarSpeedrunEnabledChanged);
 
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 	AddNormalSoundHook(NormalSHook:sound_hook);
@@ -520,7 +526,6 @@ public Updater_OnPluginUpdated()
 }
 
 
-
 // Support for beggers bazooka
 Hook_Func_regenerate()
 {
@@ -571,6 +576,9 @@ public OnMapStart()
 		PrecacheSound("misc/tf_nemesis.wav");
 		PrecacheSound("misc/freeze_cam.wav");
 		PrecacheSound("misc/killstreak.wav");
+
+		g_BeamSprite = PrecacheModel("materials/sprites/laser.vmt");
+		g_HaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
 		
 		// Change game rules to CP.
 		TF2_SetGameType();
@@ -3424,4 +3432,12 @@ public cvarSoundsChanged(Handle:convar, const String:oldValue[], const String:ne
 		SetConVarBool(g_hSoundBlock, false);
 	else
 		SetConVarBool(g_hSoundBlock, true);
+}
+
+public cvarSpeedrunEnabledChanged(Handle:convar, const String:oldValue[], const String:newValue[])
+{
+	if (StringToInt(newValue) == 0)
+		SetConVarBool(hSpeedrunEnabled, false);
+	else
+		SetConVarBool(hSpeedrunEnabled, true);
 }

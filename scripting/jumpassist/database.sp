@@ -75,6 +75,20 @@ RunDBCheck()
 		LogError("Failed to query (teleports) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `startlocs` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `MapName` TEXT(32) NOT NULL, `x` INT(25) NOT NULL, `y` INT(25) NOT NULL, `z` INT(25) NOT NULL, `xang` INT(25) NOT NULL, `yang` INT(25) NOT NULL, `zang` INT(25) NOT NULL");		
+	if (!SQL_FastQuery(g_hDatabase, query))
+	{
+		SQL_GetError(g_hDatabase, error, sizeof(error));
+		LogError("Failed to query (startlocs) (error: %s)", error);
+		SQL_UnlockDatabase(g_hDatabase);
+	}
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `zones` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `Number` INT(25) NOT NULL, `MapName` TEXT(32) NOT NULL, `x1` INT(25) NOT NULL, `y1` INT(25) NOT NULL, `z1` INT(25) NOT NULL, `x2` INT(25) NOT NULL, `y2` INT(25) NOT NULL, `z2` INT(25) NOT NULL");		
+	if (!SQL_FastQuery(g_hDatabase, query))
+	{
+		SQL_GetError(g_hDatabase, error, sizeof(error));
+		LogError("Failed to query (zones) (error: %s)", error);
+		SQL_UnlockDatabase(g_hDatabase);
+	}
 	SQL_UnlockDatabase(g_hDatabase);
 }
 public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -82,6 +96,7 @@ public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 	if (hndl == INVALID_HANDLE)
 	{ 
 		PrintToServer("[JumpAssist] Invalid database configuration, assuming none");
+		PrintToServer(error);
 		databaseConfigured = false;
 	}
 	else
