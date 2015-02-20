@@ -75,14 +75,14 @@ RunDBCheck()
 		LogError("Failed to query (teleports) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `startlocs` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `MapName` TEXT(32) NOT NULL, `x` INT(25) NOT NULL, `y` INT(25) NOT NULL, `z` INT(25) NOT NULL, `xang` INT(25) NOT NULL, `yang` INT(25) NOT NULL, `zang` INT(25) NOT NULL");		
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `startlocs` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `MapName` TEXT(32) NOT NULL, `x` FLOAT(25) NOT NULL, `y` FLOAT(25) NOT NULL, `z` FLOAT(25) NOT NULL, `xang` FLOAT(25) NOT NULL, `yang` FLOAT(25) NOT NULL, `zang` FLOAT(25) NOT NULL)");		
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (startlocs) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `zones` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `Number` INT(25) NOT NULL, `MapName` TEXT(32) NOT NULL, `x1` INT(25) NOT NULL, `y1` INT(25) NOT NULL, `z1` INT(25) NOT NULL, `x2` INT(25) NOT NULL, `y2` INT(25) NOT NULL, `z2` INT(25) NOT NULL");		
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `zones` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `Number` INT(25) NOT NULL, `MapName` TEXT(32) NOT NULL, `x1` FLOAT(25) NOT NULL, `y1` FLOAT(25) NOT NULL, `z1` FLOAT(25) NOT NULL, `x2` FLOAT(25) NOT NULL, `y2` FLOAT(25) NOT NULL, `z2` FLOAT(25) NOT NULL)");		
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));

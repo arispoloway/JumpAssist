@@ -8,9 +8,13 @@ new numZones = 0;
 
 new g_BeamSprite;
 new g_HaloSprite;
+new String:cMap[64];
+
+new Float:x, Float:y, Float:z, Float:xang, Float:yang, Float:zang;
 
 new Handle:hSpeedrunEnabled;
 
+new Float:bottomLoc[3], Float:topLoc[3];
 
 
 //ON MAP START IT WILL NEED TO LOAD ALL THIS IN
@@ -39,7 +43,7 @@ public Action:cmdAddZone(client,args){
 		return Plugin_Handled;
 	}
 
-	decl Float:start[3], Float:angle[3], Float:loc[3], Float:bottomLoc[3], Float:topLoc[3];
+	decl Float:start[3], Float:angle[3], Float:loc[3];
 
 	GetClientEyePosition(client, start);
 	GetClientEyeAngles(client, angle);
@@ -47,7 +51,6 @@ public Action:cmdAddZone(client,args){
 	if (TR_DidHit(INVALID_HANDLE)){
 		TR_GetEndPosition(loc, INVALID_HANDLE);
 	}
-
 
 	if(loc[0] == 0.0){
 		ReplyToCommand(client, "\x01[\x04JT\x01] Invalid location");
@@ -59,44 +62,46 @@ public Action:cmdAddZone(client,args){
 		bottomLoc[1] = loc[1];
 		bottomLoc[2] = loc[2];
 	}else{
-		if(topLoc[2] != 0.0){
-			bottomLoc[0] = 0.0;
-			bottomLoc[1] = 0.0;
-			bottomLoc[2] = 0.0;
 
-			topLoc[0] = 0.0;
-			topLoc[1] = 0.0;
-			topLoc[2] = 0.0;
-
+		if(loc[2] < bottomLoc[2]){
+			topLoc[0] = bottomLoc[0];
+			topLoc[1] = bottomLoc[1];
+			topLoc[2] = bottomLoc[2];
 			bottomLoc[0] = loc[0];
 			bottomLoc[1] = loc[1];
 			bottomLoc[2] = loc[2];
 		}else{
-			if(loc[2] < topLoc[2]){
-				topLoc[0] = bottomLoc[0];
-				topLoc[1] = bottomLoc[1];
-				topLoc[2] = bottomLoc[2];
-				bottomLoc[0] = loc[0];
-				bottomLoc[1] = loc[1];
-				bottomLoc[2] = loc[2];
-			}else{
-				topLoc[0] = loc[0];
-				topLoc[1] = loc[1];
-				topLoc[2] = loc[2];
-			}
-			
-			
-			new String:query[1024], String:cmap[64];
-
-			Format(query, sizeof(query), "INSERT INTO zones (MapName, number, x1, y1, z1, x2, y2, z2) VALUES (%s, %d, %f, %f, %f, %f, %f, %f)", cmap, numZones, bottomLoc[0], bottomLoc[1], bottomLoc[2], topLoc[0], topLoc[1], topLoc[2]);
-
-			SQL_TQuery(g_hDatabase, SQL_OnCheckpointAdded, query, client);
-
+			topLoc[0] = loc[0];
+			topLoc[1] = loc[1];
+			topLoc[2] = loc[2];
 		}
+
+		//SHOULD MOVE THIS SOMEWHERE ELSE - SPEEDRUN INIT
+		GetCurrentMap(cMap, sizeof(cMap));
+			
+		new String:query[1024];
+
+
+		Format(query, sizeof(query), "INSERT INTO zones VALUES (null, '%d', '%s', '%f', '%f', '%f', '%f', '%f', '%f')", numZones, cMap, bottomLoc[0], bottomLoc[1], bottomLoc[2], topLoc[0], topLoc[1], topLoc[2]);
+		
+		zoneBottom[numZones] = bottomLoc;
+		zoneTop[numZones] = topLoc;
+
+		bottomLoc[0] = 0.0;
+		bottomLoc[1] = 0.0;
+		bottomLoc[2] = 0.0;
+
+		topLoc[0] = 0.0;
+		topLoc[1] = 0.0;
+		topLoc[2] = 0.0;
+
+		SQL_TQuery(g_hDatabase, SQL_OnCheckpointAdded, query, client);
+
+		
 	}
 
 
-	ReplyToCommand(client, "\x01[\x04JT\x01] Corner successfully selected");
+	ReplyToCommand(client, "\x01[\x03JA\x01] Corner successfully selected");
 	return Plugin_Continue;
 
 
@@ -114,7 +119,7 @@ public SQL_OnCheckpointAdded(Handle:owner, Handle:hndl, const String:error[], an
 	{ 
 		LogError("OnCheckPointAdded() - Query failed! %s", error); 
 	} 
-	else if (SQL_GetRowCount(hndl)) 
+	else if (!error[0]) 
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] Zone creation was successful");
 		ShowZone(client, zoneTop[numZones], zoneBottom[numZones]);
@@ -158,27 +163,53 @@ public Action:cmdSetStart(client, args){
 	GetEntPropVector(client, Prop_Data, "m_vecOrigin", l);
 	GetClientEyeAngles(client, a);
 
-	new Float:x = l[0]; 
-	new Float:y = l[1]; 
-	new Float:z = l[2]; 
 
-	new Float:xang = a[0]; 
-	new Float:yang = a[1]; 
-	new Float:zang = a[2]; 
+	//SOME OF THIS IS REDUNDANT
+	x = l[0]; 
+	y = l[1]; 
+	z = l[2]; 
+
+	xang = a[0]; 
+	yang = a[1]; 
+	zang = a[2]; 
 
 	startLoc = l;
 	startAng = a;
 
-	new String:query[1024], String:cmap[64];
-	GetCurrentMap(cmap, sizeof(cmap));
+	new String:query[1024];
 
-	Format(query, sizeof(query), "INSERT INTO startlocs (MapName, x, y, z, xang, yang, zang) VALUES('%s', '%f', '%f', '%f', '%f', '%f', '%f') ON DUPLICATE KEY UPDATE x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f'", cmap, x, y, z, xang, yang, zang, x, y, z, xang, yang, zang);
-	PrintToServer(query);
+	//SHOULD MOVE THIS SOMEWHERE ELSE - SPEEDRUN INIT
+	GetCurrentMap(cMap, sizeof(cMap));
+
+	Format(query, sizeof(query), "SELECT * FROM startlocs WHERE MapName='%s'", cMap);
 	
-	SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
+	SQL_TQuery(g_hDatabase, SQL_OnStartLocationCheck, query, client);
 	return Plugin_Continue;
 
 
+}
+//"INSERT INTO startlocs (MapName, x, y, z, xang, yang, zang) VALUES('%s', '%f', '%f', '%f', '%f', '%f', '%f') ON DUPLICATE KEY UPDATE x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f'"
+
+public SQL_OnStartLocationCheck(Handle:owner, Handle:hndl, const String:error[], any:data){
+	
+	new client = data;
+	new String:query[1024];
+
+	if (hndl == INVALID_HANDLE) 
+	{ 
+		LogError("OnStartLocationCheck() - Query failed! %s", error); 
+	} 
+	else if (SQL_GetRowCount(hndl)) 
+	{
+		Format(query, sizeof(query), "UPDATE startlocs SET x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f' WHERE MapName='%s'", x, y, z, xang, yang, zang, cMap);
+		SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
+		
+	} 
+	else 
+	{
+		Format(query, sizeof(query), "INSERT INTO startlocs VALUES(null,'%s', '%f','%f','%f','%f','%f','%f');",cMap, x, y, z, xang, yang, zang);
+		SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
+	} 
 }
 
 public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], any:data){
@@ -189,7 +220,7 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 	{ 
 		LogError("OnStartLocationSet() - Query failed! %s", error); 
 	} 
-	else if (SQL_GetRowCount(hndl)) 
+	else if (!error[0]) 
 	{
 		
 		PrintToChat(client, "\x01[\x03JA\x01] Start location successfully set");
@@ -197,7 +228,7 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 	else 
 	{
 		PrintToServer(error);
-		PrintToChat(client, "\x01[\x03JA\x01] Start location failed to be set");
+		PrintToChat(client, "\x01[\x03JA\x01] Start location failed to set");
 		startLoc[0] = 0.0;
 		startLoc[1] = 0.0;
 		startLoc[2] = 0.0;
