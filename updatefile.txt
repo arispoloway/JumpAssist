@@ -11,11 +11,9 @@
 	"Files"
 	{
 		"Plugin"				"Path_SM/plugins/jumpassist.smx"
-		"Plugin"				"Path_SM/plugins/jumptracer.smx"
 		"Plugin"				"Path_SM/translations/jumpassist.phrases.txt"
 		
 		"Source"				"Path_SM/scripting/jumpassist.sp"
-		"Source"				"Path_SM/scripting/jumptracer.sp"
 		"Source"				"Path_SM/scripting/jumpassist/skeys.sp"
 		"Source"				"Path_SM/scripting/jumpassist/database.sp"
 		"Source"				"Path_SM/scripting/jumpassist/skillsrank.sp"
