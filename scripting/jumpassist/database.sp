@@ -98,6 +98,15 @@ RunDBCheck()
 		SQL_UnlockDatabase(g_hDatabase);
 	}
 	SQL_UnlockDatabase(g_hDatabase);
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `steamids` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `SteamID` text NOT NULL, `name` TEXT(64) NOT NULL)");		
+	if (!SQL_FastQuery(g_hDatabase, query))
+	{
+		SQL_GetError(g_hDatabase, error, sizeof(error));
+		LogError("Failed to query (steamids) (error: %s)", error);
+		SQL_UnlockDatabase(g_hDatabase);
+	}
+	SQL_UnlockDatabase(g_hDatabase);
+
 	
 	LoadMapSpeedrunInfo();
 }
@@ -120,6 +129,7 @@ public SQL_OnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
 			{
 				if (IsValidClient(i))
 				{
+					UpdateSteamID(i);
 					ReloadPlayerData(i);
 				}
 			}
@@ -428,7 +438,7 @@ public SQL_OnLoadPlayerData(Handle:owner, Handle:hndl, const String:error[], any
 			}
 		}
 
-		if (!g_bHardcore[client] && !IsClientRacing(client))
+		if (!g_bHardcore[client] && !IsClientRacing(client) && speedrunStatus[client] == 0)
 		{
 			Teleport(client);
 		}
@@ -456,7 +466,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 		
 		g_bBeatTheMap[client] = false;
 
-		TF2_RespawnPlayer(client);
+		//TF2_RespawnPlayer(client);
 		//PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 		return;
 	} 
@@ -464,7 +474,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 	{
 		g_bBeatTheMap[client] = false;
 		EraseLocs(client);
-		TF2_RespawnPlayer(client);
+		//TF2_RespawnPlayer(client);
 		//PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 		return;
 	}
