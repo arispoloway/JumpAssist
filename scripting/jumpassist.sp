@@ -1,5 +1,26 @@
 /*																	
-	SHOUTOUT TO MEOWMEOW
+             *     ,MMM8&&&.            *
+                  MMMM88&&&&&    .
+                 MMMM88&&&&&&&
+     *           MMM88&&&&&&&&
+                 MMM88&&&&&&&&
+                 'MMM88&&&&&&'
+                   'MMM8&&&'      *
+          |\___/|
+          )     (             .              '
+         =\     /=
+           )===(       *
+          /     \
+          |     |
+         /       \
+         \       /
+  _/\_/\_/\__  _/_/\_/\_/\_/\_/\_/\_/\_/\_/\_
+  |  |  |  |( (  |  |  |  |  |  |  |  |  |  |
+  |  |  |  | ) ) |  |  |  |  |  |  |  |  |  |
+  |  |  |  |(_(  |  |  |  |  |  |  |  |  |  |
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+  -----------SHOUTOUT TO MEOWMEOW------------
 
 
 
@@ -238,13 +259,14 @@ new bool:g_bRaceHealthRegen[MAXPLAYERS+1];
 new bool:g_bRaceClassForce[MAXPLAYERS+1];
 new g_bRaceSpec[MAXPLAYERS+1];
 
-
+new speedrunStatus[32];
 
 
 #include "jumpassist/skeys.sp"
 #include "jumpassist/skillsrank.sp"
 #include "jumpassist/database.sp"
 #include "jumpassist/sound.sp"
+#include "jumpassist/speedrun.sp"
 
 new Handle:g_hWelcomeMsg;
 new Handle:g_hCriticals; 
@@ -255,6 +277,7 @@ new Handle:g_hAmmoCheat;
 new Handle:g_hFastBuild;
 new Handle:hCvarBranch;
 new Handle:hArray_NoFuncRegen;
+
 
 
 
@@ -292,8 +315,8 @@ public OnPluginStart()
 	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_PLUGIN|FCVAR_NOTIFY);
 	decl String:sDesc[128]="";
 	Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
-	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH,
-	sDesc, FCVAR_NOTIFY);
+	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
+	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "0", "Turns speedrunning on/off", FCVAR_NOTIFY);
 
 	
 	// Jump Assist console commands
@@ -345,6 +368,15 @@ public OnPluginStart()
 	RegAdminCmd("sm_jatele", SendToLocation, ADMFLAG_GENERIC, "Sends a player to the spcified jump.");
 	RegAdminCmd("sm_addtele", cmdAddTele, ADMFLAG_GENERIC, "Adds a teleport location for the current map");
 
+	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_GENERIC, "Sets the map start location for speedrunning");
+	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_GENERIC, "Adds a checkpoint or end zone for speedrunning");
+	RegAdminCmd("sm_clearzones", cmdClearZones, ADMFLAG_GENERIC, "Deletes all zones on the current map");
+	RegConsoleCmd("sm_showzones", cmdShowZones, "Shows all zones of the map");
+	RegConsoleCmd("sm_speedrun", cmdToggleSpeedrun, "Enables/disables speedrunning");
+	RegConsoleCmd("sm_pr", cmdShowPR, "Shows your personal record");
+	RegConsoleCmd("sm_wr", cmdShowWR, "Shows the map record");
+	//RegConsoleCmd("sm_top", cmdShowTop, "Shows the top speedruns of the map");
+
 	// ROOT COMMANDS, they're set to root users for a reason.
 	RegAdminCmd("sm_ja_query", RunQuery, ADMFLAG_ROOT, "Runs a SQL query on the JA database. (FOR TESTING)");
 #if defined DEBUG
@@ -375,6 +407,7 @@ public OnPluginStart()
 	HookConVarChange(g_hSuperman, cvarSupermanChanged);
 	HookConVarChange(g_hSoundBlock, cvarSoundsChanged);
 	HookConVarChange(g_hSentryLevel, cvarSentryLevelChanged);
+	HookConVarChange(hSpeedrunEnabled, cvarSpeedrunEnabledChanged);
 
 	HookUserMessage(GetUserMessageId("VoiceSubtitle"), HookVoice, true);
 	AddNormalSoundHook(NormalSHook:sound_hook);
@@ -395,6 +428,7 @@ public OnPluginStart()
 	for(new i = 0; i < MAXPLAYERS+1; i++){
 		if (IsValidClient(i))
 		{
+
 			g_iClientWeapons[i][0] = GetPlayerWeaponSlot(i, TFWeaponSlot_Primary);
 			g_iClientWeapons[i][1] = GetPlayerWeaponSlot(i, TFWeaponSlot_Secondary);
 			g_iClientWeapons[i][2] = GetPlayerWeaponSlot(i, TFWeaponSlot_Melee);
@@ -424,9 +458,10 @@ public OnPluginStart()
 	} else {
 		LogMessage("Updater plugin not found.");
 	}
-
+	
 	ConnectToDatabase();
 	SetDesc();
+
 }
 
 stock bool:VerifyBranch(String:branch[],len)
@@ -521,6 +556,28 @@ public Updater_OnPluginUpdated()
 
 
 
+public OnGameFrame(){
+	SkeysOnGameFrame();
+	if(GetConVarBool(hSpeedrunEnabled)){
+		SpeedrunOnGameFrame();
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Support for beggers bazooka
 Hook_Func_regenerate()
 {
@@ -571,6 +628,9 @@ public OnMapStart()
 		PrecacheSound("misc/tf_nemesis.wav");
 		PrecacheSound("misc/freeze_cam.wav");
 		PrecacheSound("misc/killstreak.wav");
+
+		g_BeamSprite = PrecacheModel("materials/sprites/laser.vmt");
+		g_HaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
 		
 		// Change game rules to CP.
 		TF2_SetGameType();
@@ -581,7 +641,9 @@ public OnMapStart()
 		{
 			g_iCPs++;
 		}
-		
+
+		if(databaseConfigured){ LoadMapSpeedrunInfo(); }
+
 		Hook_Func_regenerate();
 
 	}
@@ -601,6 +663,13 @@ public OnClientDisconnect(client)
 	{
 		LeaveRace(client);
 	}
+
+	speedrunStatus[client] = 0;
+	for(int i = 0; i < 32; i++){
+		zoneTimes[client][i] = 0.0;
+	}
+	lastFrameInStartZone[client] = false;
+
 	SetSkeysDefaults(client);
 	
 	new idx;
@@ -614,6 +683,9 @@ public OnClientPutInServer(client)
 {
 	if (GetConVarBool(g_hPluginEnabled))
 	{
+		if(hSpeedrunEnabled){
+			UpdateSteamID(client);
+		}
 		// Hook the client
 		if(IsValidClient(client)) 
 		{
@@ -641,6 +713,11 @@ public OnClientPutInServer(client)
 public Action:cmdRaceInitialize(client, args)
 {
 	if (!IsValidClient(client)) { return; }
+
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		PrintToChat(client, "\x01[\x03JA\x01] You may not race while speedrunning");
+		return;
+	}
 	if (g_bSpeedRun[client]) 
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
@@ -745,11 +822,10 @@ public Action:cmdRaceInvite(client, args)
 		for(new i = 1; i < args+1; i++){
 			GetCmdArg(i, arg1, sizeof(arg1));
 			target = FindTarget(client, arg1, true, false);
-			if(target != -1){
+			GetClientName(target, client2Name, sizeof(client2Name));
+			if(target != -1 && !speedrunStatus[target]){
 
 				
-				
-				GetClientName(target, client2Name, sizeof(client2Name));
 			
 				PrintToChat(client, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
 				
@@ -765,6 +841,8 @@ public Action:cmdRaceInvite(client, args)
 				SendPanelToClient(panel, target, InviteHandler, 15);
 				
 				CloseHandle(panel);
+			}else if(speedrunStatus[target]){
+				PrintToChat(client, "\x01[\x03JA\x01] %s is currently in a speedrun", client2Name);
 			}
 		}
 	}
@@ -800,7 +878,7 @@ Handle:PlayerMenu()
 	//SHOULDNT SHOW CURRENT PLAYER AND ALSO PLAYERS ALREADY IN A RACE BUT I NEED THAT FOR TESTING FOR NOW
 	for (new i = 1; i <= GetMaxClients(); i++)
 	{
-		if(IsValidClient(i))
+		if(IsValidClient(i) && !speedrunStatus[i])
 		{
 			IntToString(i, buffer, sizeof(buffer));
 			GetClientName(i, clientName, sizeof(clientName));
@@ -1847,6 +1925,10 @@ stock bool:IsRaceOver(client){
 public Action:cmdToggleAmmo(client, args)
 {
 	if (!IsValidClient(client)) { return; }
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		PrintToChat(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
+		return;
+	}
 	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
 		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a race");
 		return;
@@ -1859,6 +1941,10 @@ public Action:cmdToggleAmmo(client, args)
 public Action:cmdToggleHealth(client, args)
 {
 	if (!IsValidClient(client)) { return; }
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		PrintToChat(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
+		return;
+	}
 	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
 		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a race");
 		return;
@@ -2058,6 +2144,11 @@ public Action:RunQuery(client, args)
 public Action:cmdUnkillable(client, args)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Handled; }
+
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		ReplyToCommand(client, "\x01[\x03JA\x01] You may not use superman during a speedrun");
+		return Plugin_Handled;
+	}
 	if (!GetConVarBool(g_hSuperman) && !IsUserAdmin(client))
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Command_Locked");
@@ -2105,7 +2196,11 @@ public Action:cmdUndo(client, args)
 	}
 }
 public Action:cmdDoRegen(client, args)
-{
+{	
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
+		return Plugin_Handled;
+	}
 	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
 		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a race");
 		return Plugin_Handled;
@@ -2160,6 +2255,10 @@ public Action:cmdSendPlayer(client, args)
 		new target1 = FindTarget2(client, arg1, true, false);
 		new target2 = FindTarget2(client, arg2, true, false);
 		
+		if(speedrunStatus[target1]){
+			ReplyToCommand(client, "\x01[\x03JA\x01] You cannot send a player in a speedrun");
+			return Plugin_Handled;
+		}
 		if (target1 == client)
 		{
 			ReplyToCommand(client, "\x01[\x03JA\x01] %t", "SendPlayer_Self", cLightGreen, cDefault);
@@ -2209,51 +2308,57 @@ public Action:cmdGotoClient(client, args)
 				return Plugin_Handled;
 			}
 
-			new String:arg1[MAX_NAME_LENGTH];
-			GetCmdArg(1, arg1, sizeof(arg1));
-
-			new String:target_name[MAX_TARGET_LENGTH], target_list[MAXPLAYERS], target_count, bool:tn_is_ml;
-
-			new Float:TeleportOrigin[3], Float:PlayerOrigin[3], Float:pAngle[3], Float:PlayerOrigin2[3], Float:g_fPosVec[3];
-			if ((target_count = ProcessTargetString(arg1, client, target_list, MAXPLAYERS, COMMAND_FILTER_NO_IMMUNITY, target_name, sizeof(target_name), tn_is_ml)) <= 0)
-			{
-				ReplyToCommand(client, "\x01[\x03JA\x01] %t", "No matching client", LANG_SERVER);
+			if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+				ReplyToCommand(client, "\x01[\x03JA\x01] Cannot use goto while in a speedrun");
 				return Plugin_Handled;
-			}
-			if (target_count > 1)
-			{
-				ReplyToCommand(client, "\x01[\x03JA\x01] %t", "More than one client matched", LANG_SERVER);
-				return Plugin_Handled;
-			}
-			for (new i = 0; i < target_count; i++)
-			{
-				if (IsClientObserver(target_list[i]) || !IsValidClient(target_list[i]))
+			}else{
+
+				new String:arg1[MAX_NAME_LENGTH];
+				GetCmdArg(1, arg1, sizeof(arg1));
+
+				new String:target_name[MAX_TARGET_LENGTH], target_list[MAXPLAYERS], target_count, bool:tn_is_ml;
+
+				new Float:TeleportOrigin[3], Float:PlayerOrigin[3], Float:pAngle[3], Float:PlayerOrigin2[3], Float:g_fPosVec[3];
+				if ((target_count = ProcessTargetString(arg1, client, target_list, MAXPLAYERS, COMMAND_FILTER_NO_IMMUNITY, target_name, sizeof(target_name), tn_is_ml)) <= 0)
 				{
-					ReplyToCommand(client, "\x01[\x03JA\x01] %t", "Goto_Cant", LANG_SERVER, target_name);
+					ReplyToCommand(client, "\x01[\x03JA\x01] %t", "No matching client", LANG_SERVER);
 					return Plugin_Handled;
 				}
-				if (target_list[i] == client)
+				if (target_count > 1)
 				{
-					ReplyToCommand(client, "\x01[\x03JA\x01] %t", "Goto_Self", LANG_SERVER);
+					ReplyToCommand(client, "\x01[\x03JA\x01] %t", "More than one client matched", LANG_SERVER);
 					return Plugin_Handled;
 				}
-				GetClientAbsOrigin(target_list[i], PlayerOrigin);
-				GetClientAbsAngles(target_list[i], PlayerOrigin2);
+				for (new i = 0; i < target_count; i++)
+				{
+					if (IsClientObserver(target_list[i]) || !IsValidClient(target_list[i]))
+					{
+						ReplyToCommand(client, "\x01[\x03JA\x01] %t", "Goto_Cant", LANG_SERVER, target_name);
+						return Plugin_Handled;
+					}
+					if (target_list[i] == client)
+					{
+						ReplyToCommand(client, "\x01[\x03JA\x01] %t", "Goto_Self", LANG_SERVER);
+						return Plugin_Handled;
+					}
+					GetClientAbsOrigin(target_list[i], PlayerOrigin);
+					GetClientAbsAngles(target_list[i], PlayerOrigin2);
 
-				TeleportOrigin[0] = PlayerOrigin[0];
-				TeleportOrigin[1] = PlayerOrigin[1];
-				TeleportOrigin[2] = PlayerOrigin[2];
+					TeleportOrigin[0] = PlayerOrigin[0];
+					TeleportOrigin[1] = PlayerOrigin[1];
+					TeleportOrigin[2] = PlayerOrigin[2];
 
-				pAngle[0] = PlayerOrigin2[0];
-				pAngle[1] = PlayerOrigin2[1];
-				pAngle[2] = PlayerOrigin2[2];
+					pAngle[0] = PlayerOrigin2[0];
+					pAngle[1] = PlayerOrigin2[1];
+					pAngle[2] = PlayerOrigin2[2];
 
-				g_fPosVec[0] = 0.0;
-				g_fPosVec[1] = 0.0;
-				g_fPosVec[2] = 0.0;
+					g_fPosVec[0] = 0.0;
+					g_fPosVec[1] = 0.0;
+					g_fPosVec[2] = 0.0;
 
-				TeleportEntity(client, TeleportOrigin, pAngle, g_fPosVec);
-				PrintToChat(client, "\x01[\x03JA\x01] %t", "Goto_Success", target_name);
+					TeleportEntity(client, TeleportOrigin, pAngle, g_fPosVec);
+					PrintToChat(client, "\x01[\x03JA\x01] %t", "Goto_Success", target_name);
+				}
 			}
 		} else {
 			ReplyToCommand(client, "\x01[\x03JA\x01] %t", "No Access", LANG_SERVER);
@@ -2288,6 +2393,10 @@ public Action:cmdReset(client, args)
 public Action:cmdTele(client, args)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Handled; }
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		PrintToChat(client, "\x01[\x03JA\x01] You may not teleport while speedrunning");
+		return Plugin_Handled;
+	}
 	Teleport(client);
 	return Plugin_Handled;
 }
@@ -2408,7 +2517,11 @@ Hardcore(client)
 		g_bHardcore[client] = true;
 		g_bHPRegen[client] = false;
 		EraseLocs(client);
-		TF2_RespawnPlayer(client);
+		if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+			RestartSpeedrun(client);
+		}else{
+			TF2_RespawnPlayer(client);
+		}
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_On", cLightGreen, cDefault);
 	} else {
 		g_bHardcore[client] = false;
@@ -2723,7 +2836,11 @@ public Action:cmdRestart(client, args)
 	{
 		ResetPlayerPos(client);
 	}
-	TF2_RespawnPlayer(client);
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+		RestartSpeedrun(client);
+	}else{
+		TF2_RespawnPlayer(client);
+	}
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	return Plugin_Handled;
 }
@@ -2735,8 +2852,11 @@ SendToStart(client)
 	}
 
 	g_bUsedReset[client] = true;
-
-	TF2_RespawnPlayer(client);
+	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
+			RestartSpeedrun(client);
+	}else{
+		TF2_RespawnPlayer(client);
+	}
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_SentToStart");
 }
 stock String:GetClassname(class)
@@ -3424,4 +3544,12 @@ public cvarSoundsChanged(Handle:convar, const String:oldValue[], const String:ne
 		SetConVarBool(g_hSoundBlock, false);
 	else
 		SetConVarBool(g_hSoundBlock, true);
+}
+
+public cvarSpeedrunEnabledChanged(Handle:convar, const String:oldValue[], const String:newValue[])
+{
+	if (StringToInt(newValue) == 0)
+		SetConVarBool(hSpeedrunEnabled, false);
+	else
+		SetConVarBool(hSpeedrunEnabled, true);
 }
