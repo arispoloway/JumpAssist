@@ -316,7 +316,7 @@ public OnPluginStart()
 	decl String:sDesc[128]="";
 	Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
 	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
-	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "0", "Turns speedrunning on/off", FCVAR_NOTIFY);
+	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "1", "Turns speedrunning on/off", FCVAR_NOTIFY);
 
 	
 	// Jump Assist console commands
