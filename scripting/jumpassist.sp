@@ -350,7 +350,8 @@ public OnPluginStart()
 	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_GENERIC, "Sets the map start location for speedrunning");
 	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_GENERIC, "Adds a checkpoint or end zone for speedrunning");
 	RegConsoleCmd("sm_showzones", cmdShowZones, "Shows all zones of the map");
-	RegConsoleCmd("sm_sr", cmdShowZones, "Shows all zones of the map");
+	RegConsoleCmd("sm_sr", cmdSpeedrunRestart, "Shows all zones of the map");
+	RegConsoleCmd("sm_speedrun", cmdToggleSpeedrun, "Shows all zones of the map");
 	RegConsoleCmd("sm_stest", cmdSTest, "REMEMBER TO REMOVE THIS BEFORE PUBLISHING");
 
 	// ROOT COMMANDS, they're set to root users for a reason.
@@ -530,6 +531,29 @@ public Updater_OnPluginUpdated()
 }
 
 
+
+public OnGameFrame(){
+	SkeysOnGameFrame();
+	if(GetConVarBool(hSpeedrunEnabled)){
+		SpeedrunOnGameFrame();
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Support for beggers bazooka
 Hook_Func_regenerate()
 {
@@ -615,6 +639,13 @@ public OnClientDisconnect(client)
 	{
 		LeaveRace(client);
 	}
+
+	speedrunStatus[client] = 0;
+	for(int i = 0; i < 32; i++){
+		zoneTimes[client][i] = 0.0;
+	}
+	lastFrameInStartZone[client] = false;
+
 	SetSkeysDefaults(client);
 	
 	new idx;

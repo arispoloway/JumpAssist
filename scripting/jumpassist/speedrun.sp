@@ -3,9 +3,16 @@ new Float:startLoc[3], Float:startAng[3], Float:sLoc[3], Float:sAng[3], Float:bo
 
 new Float:zoneBottom[32][3];
 new Float:zoneTop[32][3];
-new Float:checkPointTimes[32][32];
-new Float:startTime[32];
-new bool:isSpeedrunning[32];
+new Float:zoneTimes[32][32];
+
+new processingClass[32];
+new Float:processingZoneTimes[32][32];
+
+new lastFrameInStartZone[32];
+new speedrunStatus[32];
+	//0 = not running
+	//1 = running
+	//2 = finished
 
 new g_BeamSprite;
 new g_HaloSprite;
@@ -15,6 +22,147 @@ new numZones = 0;
 
 new Handle:hSpeedrunEnabled;
 
+
+public processSpeedrun(client){
+	new String:query[1024] = "", String:steamid[32], String:endtime[4];
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+
+	Format(endtime, sizeof(endtime), "c%d", numZones-1);
+
+	Format(query, sizeof(query), "SELECT %s FROM times WHERE SteamID='%s' AND class='%d' AND MapName='%s'", endtime, steamid, processingClass[client], cMap);
+	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunCheckLoad, query, client);
+}
+
+public SQL_OnSpeedrunCheckLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
+
+	new client = data;
+	new Float:t;
+	new String:query[1024], String:steamid[32], datetime;
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+
+	datetime = GetTime();
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnSpeedrunCheckLoad() - Query failed! %s", error);
+	}
+	else if (SQL_GetRowCount(hndl))
+	{
+		SQL_FetchRow(hndl);
+		new Float:endTime = SQL_FetchFloat(hndl, 0);
+
+		if(endTime > processingZoneTimes[client][numZones-1]-processingZoneTimes[client][0]){
+			Format(query, sizeof(query), "UPDATE times SET time='%d',", datetime);
+
+			for(int i = 0; i < 32; i++){
+				if(i == 0){
+					Format(query, sizeof(query), "%s c%d='%f',", query, i, 0.0);
+				}else{
+					t = processingZoneTimes[client][i]-processingZoneTimes[client][0];
+					if(t < 0.0){
+						t = 0.0;
+					}
+					Format(query, sizeof(query), "%s c%d='%f'", query, i, t);
+					if(i != 31){
+						Format(query, sizeof(query), "%s,",query);
+					}
+				}
+			}
+			Format(query, sizeof(query), "%s WHERE SteamID='%s' AND MapName='%s' AND class='%d';", query, steamid, cMap, processingClass[client]);
+
+			SQL_TQuery(g_hDatabase, SQL_OnSpeedrunSubmit, query, client);
+		}else{
+			//MAP RUN VS NEW PR
+		}
+
+
+	}
+	else
+	{
+		Format(query, sizeof(query), "INSERT INTO times VALUES(null, '%s', '%d', '%s', '%d',", steamid, processingClass[client], cMap, datetime);
+
+		for(int i = 0; i < 32; i++){
+			if(i == 0){
+				Format(query, sizeof(query), "%s '%f',", query, 0.0);
+			}else{
+				t = processingZoneTimes[client][i]-processingZoneTimes[client][0];
+				if(t < 0.0){
+					t = 0.0;
+				}
+				Format(query, sizeof(query), "%s '%f'", query, t);
+				if(i != 31){
+					Format(query, sizeof(query), "%s,",query);
+				}
+			}
+			PrintToServer("%f", processingZoneTimes[client][i]);
+		}
+
+		Format(query, sizeof(query), "%s);", query);
+
+		SQL_TQuery(g_hDatabase, SQL_OnSpeedrunSubmit, query, client);
+	}
+}
+
+
+public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any:data){
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnSpeedrunSubmit() - Query failed! %s", error);
+	}
+	else if (SQL_GetRowCount(hndl))
+	{
+
+	}
+	else
+	{
+
+	}
+}
+
+public SpeedrunOnGameFrame(){
+	for(int i = 0; i < 32; i++){
+		if(speedrunStatus[i]==1){
+			for(int j = 0; j < numZones; j++){
+				if(IsInZone(i, j) && zoneTimes[i][j] == 0.0 && j != 0) {
+					zoneTimes[i][j] = GetEngineTime();
+					if(j != numZones-1){
+						new String:timeString[128];
+						timeString = TimeFormat(zoneTimes[i][j] - zoneTimes[i][0]);
+						PrintToChat(i, "\x01[\x03JA\x01] \x01\x04Checkpoint %d\x01: %s", j, timeString);
+					}else{
+						new String:timeString[128];
+						timeString = TimeFormat(zoneTimes[i][j] - zoneTimes[i][0]);
+						PrintToChat(i, "\x01[\x03JA\x01] Finished in %s", timeString);
+						speedrunStatus[i] = 2;
+
+						processingClass[i] = view_as<int>TF2_GetPlayerClass(i);
+						processingZoneTimes[i] = zoneTimes[i];
+
+						for(int h = 0; h < 32; h++){
+							zoneTimes[i][h] = 0.0;
+						}
+						processSpeedrun(i);
+					}
+				}
+				if(!IsInZone(i, 0) && lastFrameInStartZone[i]){
+					PrintToChat(i, "\x01[\x03JA\x01] Speedrun started");
+					zoneTimes[i][j] = GetEngineTime();
+				}			
+				if(IsInZone(i, 0)){
+					lastFrameInStartZone[i] = true;
+				}else{
+					lastFrameInStartZone[i] = false;
+				}
+
+			
+			}
+		}else if(speedrunStatus[i]==2){
+			if(IsInZone(i, 0)){
+				speedrunStatus[i] = 1;
+			}
+
+		}
+	}
+}
 
 public Action:cmdSpeedrunRestart(client,args){
 	if(!databaseConfigured)
@@ -36,10 +184,10 @@ public Action:cmdSpeedrunRestart(client,args){
 		return Plugin_Handled;
 	}
 
-	new Float:v[3];
-	TeleportEntity(client,startLoc,startAng,v);
+	RestartSpeedrun(client);
 	return Plugin_Continue;
 }
+
 public Action:cmdToggleSpeedrun(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
 		return Plugin_Continue;
@@ -64,24 +212,36 @@ public Action:cmdToggleSpeedrun(client,args){
 		return Plugin_Handled;
 	}
 
-	isSpeedrunning[client] = !isSpeedrunning[client];
-	if(isSpeedrunning[client]){
-		ReplyToCommand(client, "\x01[\x03JA\x01] Speedrunning enabled");
-		new Float:v[3];
-		TeleportEntity(client,startLoc,startAng,v);
-	}else{
+
+	if(speedrunStatus[client]){
 		ReplyToCommand(client, "\x01[\x03JA\x01] Speedrunning disabled");
+		speedrunStatus[client] = 0;
+
+	}else{
+		ReplyToCommand(client, "\x01[\x03JA\x01] Speedrunning enabled");
+		speedrunStatus[client] = 1;
+		RestartSpeedrun(client);
 	}
 	return Plugin_Continue;
 }
 
-public Action:cmdSTest(client,args){
-	if(IsSpeedrunMap()){
-		PrintToChat(client,"Yes");
-	}else{
-		PrintToChat(client,"No");
-
+public RestartSpeedrun(client){
+	new Float:v[3];
+	speedrunStatus[client] = 1;
+	for(int i = 0; i < 32; i++){
+		zoneTimes[client][i] = 0.0;
 	}
+	lastFrameInStartZone[client] = false;
+	TeleportEntity(client,startLoc,startAng,v);
+}
+
+public Action:cmdSTest(client,args){
+	new String:test[64];
+	for(int i = 0; i < 32; i++){
+		Format(test, sizeof(test), "%s%d",test,i);
+	}
+
+	PrintToChat(client, test);
 }
 
 
@@ -127,11 +287,11 @@ public Action:ClearMapSpeedrunInfo(){
 		zoneTop[i][2] = 0.0;
 
 		for(int j = 0; j < 32; j++){
-			checkPointTimes[i][j] = 0.0;
-
+			zoneTimes[i][j] = 0.0;
 		}
-		startTime[i] = 0.0;
-		isSpeedrunning[i] = false;	
+
+		lastFrameInStartZone[i] = false;
+		speedrunStatus[i] = 0;
 	}
 
 	startLoc[0] = 0.0;
@@ -149,19 +309,19 @@ public Action:LoadMapSpeedrunInfo(){
 	GetCurrentMap(cMap, sizeof(cMap));
 
 	Format(query, sizeof(query), "SELECT x, y, z, xang, yang, zang FROM startlocs WHERE MapName='%s'", cMap);
-	SQL_TQuery(g_hDatabase, SQL_OnMapStartLocationLoad, query, 0);	
+	SQL_TQuery(g_hDatabase, SQL_OnMapStartLocationLoad, query, 0);
 
 	Format(query, sizeof(query), "SELECT x1, y1, z1, x2, y2, z2 FROM zones WHERE MapName='%s' ORDER BY 'number' ASC", cMap);
 	SQL_TQuery(g_hDatabase, SQL_OnMapZonesLoad, query, 0);
 }
 
 public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
-	
-	if (hndl == INVALID_HANDLE) 
-	{ 
-		LogError("OnMapZonesLoad() - Query failed! %s", error); 
-	} 
-	else if (SQL_GetRowCount(hndl)) 
+
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnMapZonesLoad() - Query failed! %s", error);
+	}
+	else if (SQL_GetRowCount(hndl))
 	{
 		new numRows = SQL_GetRowCount(hndl);
 
@@ -176,20 +336,21 @@ public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:d
 			zoneTop[numZones][2] = SQL_FetchFloat(hndl, 5);
 		}
 
-	} 
-	else 
+	}
+	else
 	{
 
-	} 
+	}
 }
 
 public SQL_OnMapStartLocationLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
-	
-	if (hndl == INVALID_HANDLE) 
-	{ 
-		LogError("OnMapStartLocationLoad() - Query failed! %s", error); 
-	} 
-	else if (SQL_GetRowCount(hndl)) 
+
+
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnMapStartLocationLoad() - Query failed! %s", error);
+	}
+	else if (SQL_GetRowCount(hndl))
 	{
 		SQL_FetchRow(hndl);
 		startLoc[0] = SQL_FetchFloat(hndl, 0);
@@ -198,12 +359,12 @@ public SQL_OnMapStartLocationLoad(Handle:owner, Handle:hndl, const String:error[
 		startAng[0] = SQL_FetchFloat(hndl, 3);
 		startAng[1] = SQL_FetchFloat(hndl, 4);
 		startAng[2] = SQL_FetchFloat(hndl, 5);
-	} 
-	else 
+	}
+	else
 	{
 
 
-	} 
+	}
 }
 
 
@@ -263,12 +424,12 @@ public Action:cmdAddZone(client,args){
 			topLoc[1] = loc[1];
 			topLoc[2] = loc[2];
 		}
-		
-			
+
+
 		new String:query[1024];
 
 		Format(query, sizeof(query), "INSERT INTO zones VALUES (null, '%d', '%s', '%f', '%f', '%f', '%f', '%f', '%f')", numZones, cMap, bottomLoc[0], bottomLoc[1], bottomLoc[2], topLoc[0], topLoc[1], topLoc[2]);
-		
+
 		zoneBottom[numZones] = bottomLoc;
 		zoneTop[numZones] = topLoc;
 
@@ -294,18 +455,18 @@ public Action:cmdAddZone(client,args){
 public SQL_OnZoneAdded(Handle:owner, Handle:hndl, const String:error[], any:data){
 
 	new client = data;
-	
-	if (hndl == INVALID_HANDLE) 
-	{ 
-		LogError("OnCheckPointAdded() - Query failed! %s", error); 
-	} 
-	else if (!error[0]) 
+
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnCheckPointAdded() - Query failed! %s", error);
+	}
+	else if (!error[0])
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] Zone creation was successful");
 		ShowZone(client, numZones);
 		numZones++;
-	} 
-	else 
+	}
+	else
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] Zone creation failed");
 		zoneBottom[numZones][0] = 0.0;
@@ -315,7 +476,7 @@ public SQL_OnZoneAdded(Handle:owner, Handle:hndl, const String:error[], any:data
 		zoneTop[numZones][1] = 0.0;
 		zoneTop[numZones][2] = 0.0;
 
-	} 
+	}
 }
 
 public Action:cmdSetStart(client, args){
@@ -351,47 +512,47 @@ public Action:cmdSetStart(client, args){
 	new String:query[1024];
 
 	Format(query, sizeof(query), "SELECT * FROM startlocs WHERE MapName='%s'", cMap);
-	
+
 	SQL_TQuery(g_hDatabase, SQL_OnStartLocationCheck, query, client);
 	return Plugin_Continue;
 }
 
 public SQL_OnStartLocationCheck(Handle:owner, Handle:hndl, const String:error[], any:data){
-	
+
 	new client = data;
 	new String:query[1024];
 
-	if (hndl == INVALID_HANDLE) 
-	{ 
-		LogError("OnStartLocationCheck() - Query failed! %s", error); 
-	} 
-	else if (SQL_GetRowCount(hndl)) 
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnStartLocationCheck() - Query failed! %s", error);
+	}
+	else if (SQL_GetRowCount(hndl))
 	{
 		Format(query, sizeof(query), "UPDATE startlocs SET x='%f',y='%f',z='%f',xang='%f',yang='%f',zang='%f' WHERE MapName='%s'", sLoc[0], sLoc[1], sLoc[2], sAng[0], sAng[1], sAng[2], cMap);
 		SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
-		
-	} 
-	else 
+
+	}
+	else
 	{
 		Format(query, sizeof(query), "INSERT INTO startlocs VALUES(null,'%s', '%f','%f','%f','%f','%f','%f');",cMap, sLoc[0], sLoc[1], sLoc[2], sAng[0], sAng[1], sAng[2]);
 		SQL_TQuery(g_hDatabase, SQL_OnStartLocationSet, query, client);
-	} 
+	}
 }
 
 public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], any:data){
-	
+
 	new client = data;
-	
-	if (hndl == INVALID_HANDLE) 
-	{ 
-		LogError("OnStartLocationSet() - Query failed! %s", error); 
-	} 
-	else if (!error[0]) 
+
+	if (hndl == INVALID_HANDLE)
 	{
-		
+		LogError("OnStartLocationSet() - Query failed! %s", error);
+	}
+	else if (!error[0])
+	{
+
 		PrintToChat(client, "\x01[\x03JA\x01] Start location successfully set");
-	} 
-	else 
+	}
+	else
 	{
 		PrintToServer(error);
 		PrintToChat(client, "\x01[\x03JA\x01] Start location failed to set");
@@ -402,8 +563,8 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 		sAng[0] = 0.0;
 		sAng[1] = 0.0;
 		sAng[2] = 0.0;
-		
-	} 
+
+	}
 }
 
 
@@ -460,7 +621,7 @@ bool:IsInRegion(client, Float:bottom[3], Float:upper[3]){
 
 public bool:TraceEntityFilterPlayer(entity, contentsMask, any:data){
 	return entity > MaxClients;
-}  
+}
 
 stock ShowZone(client, zone){
 	Effect_DrawBeamBoxToClient(client, zoneBottom[zone], zoneTop[zone], g_BeamSprite, g_HaloSprite, 0, 30);
@@ -514,10 +675,10 @@ stock Effect_DrawBeamBox(
 	}
 
 	corners[1][0] = upperCorner[0];
-	corners[2][0] = upperCorner[0]; 
+	corners[2][0] = upperCorner[0];
 	corners[2][1] = upperCorner[1];
 	corners[3][1] = upperCorner[1];
-	corners[4][0] = bottomCorner[0]; 
+	corners[4][0] = bottomCorner[0];
 	corners[4][1] = bottomCorner[1];
 	corners[5][1] = bottomCorner[1];
 	corners[7][0] = bottomCorner[0];

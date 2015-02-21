@@ -46,7 +46,7 @@ ConnectToDatabase()
 }
 RunDBCheck()
 {
-	decl String:error[255], String:query[512];
+	decl String:error[255], String:query[2048];
 	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL, `Capped` VARCHAR(32))");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
@@ -87,6 +87,14 @@ RunDBCheck()
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (zones) (error: %s)", error);
+		SQL_UnlockDatabase(g_hDatabase);
+	}
+	SQL_UnlockDatabase(g_hDatabase);
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `times` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `SteamID` text NOT NULL, `class` INT(23) NOT NULL, `MapName` TEXT(32) NOT NULL, `time` BIGINT NOT NULL, `c0` FLOAT(25) DEFAULT '0.0', `c1` FLOAT(25) DEFAULT '0.0', `c2` FLOAT(25) DEFAULT '0.0', `c3` FLOAT(25) DEFAULT '0.0', `c4` FLOAT(25) DEFAULT '0.0', `c5` FLOAT(25) DEFAULT '0.0', `c6` FLOAT(25) DEFAULT '0.0', `c7` FLOAT(25) DEFAULT '0.0', `c8` FLOAT(25) DEFAULT '0.0', `c9` FLOAT(25) DEFAULT '0.0', `c10` FLOAT(25) DEFAULT '0.0', `c11` FLOAT(25) DEFAULT '0.0', `c12` FLOAT(25) DEFAULT '0.0', `c13` FLOAT(25) DEFAULT '0.0', `c14` FLOAT(25) DEFAULT '0.0', `c15` FLOAT(25) DEFAULT '0.0', `c16` FLOAT(25) DEFAULT '0.0', `c17` FLOAT(25) DEFAULT '0.0', `c18` FLOAT(25) DEFAULT '0.0', `c19` FLOAT(25) DEFAULT '0.0', `c20` FLOAT(25) DEFAULT '0.0', `c21` FLOAT(25) DEFAULT '0.0', `c22` FLOAT(25) DEFAULT '0.0', `c23` FLOAT(25) DEFAULT '0.0', `c24` FLOAT(25) DEFAULT '0.0', `c25` FLOAT(25) DEFAULT '0.0', `c26` FLOAT(25) DEFAULT '0.0', `c27` FLOAT(25) DEFAULT '0.0', `c28` FLOAT(25) DEFAULT '0.0', `c29` FLOAT(25) DEFAULT '0.0', `c30` FLOAT(25) DEFAULT '0.0', `c31` FLOAT(25) DEFAULT '0.0');");		
+	if (!SQL_FastQuery(g_hDatabase, query))
+	{
+		SQL_GetError(g_hDatabase, error, sizeof(error));
+		LogError("Failed to query (times) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
 	SQL_UnlockDatabase(g_hDatabase);

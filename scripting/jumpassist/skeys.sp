@@ -45,7 +45,7 @@ public SetSkeysDefaults(client){
 
 
 
-public OnGameFrame()
+public SkeysOnGameFrame()
 {
 	new iClientToShow, iObserverMode;
 	for (new i=1;i<MaxClients;i++)
