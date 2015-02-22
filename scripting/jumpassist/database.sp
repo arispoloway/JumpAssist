@@ -448,7 +448,7 @@ public SQL_OnDeletePlayerData(Handle:owner, Handle:hndl, const String:error[], a
 {
 	new client = data; 
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 
 	if (hndl == INVALID_HANDLE) 
 	{ 
@@ -521,7 +521,7 @@ GetPlayerData(client)
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 	
 	Format(sQuery, sizeof(sQuery), "SELECT * FROM `player_saves` WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 
@@ -536,7 +536,7 @@ SavePlayerData(client)
 	GetCurrentMap(sMap, sizeof(sMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 	new Float:SavePos1[MAXPLAYERS+1][3];
 	new Float:SavePos2[MAXPLAYERS+1][3];
 	
@@ -563,7 +563,7 @@ UpdatePlayerData(client)
 	GetCurrentMap(sMap, sizeof(sMap));
 	
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 
 	new Float:SavePos1[MAXPLAYERS+1][3];
 	new Float:SavePos2[MAXPLAYERS+1][3];
@@ -591,7 +591,7 @@ DeletePlayerData(client)
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 
 	Format(sQuery, sizeof(sQuery), "DELETE FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 
@@ -606,7 +606,7 @@ ReloadPlayerData(client)
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
 	//PrintToServer(sSteamID);
@@ -621,7 +621,7 @@ LoadPlayerData(client)
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 
 
 	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);

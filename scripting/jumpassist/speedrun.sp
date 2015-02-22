@@ -56,7 +56,7 @@ public SQL_OnSpeedrunCheckLoad(Handle:owner, Handle:hndl, const String:error[], 
 		if(endTime > processingZoneTimes[client][numZones-1]-processingZoneTimes[client][0]){
 			Format(query, sizeof(query), "UPDATE times SET time='%d',", datetime);
 
-			for(int i = 0; i < 32; i++){
+			for(new i = 0; i < 32; i++){
 				if(i == 0){
 					Format(query, sizeof(query), "%s c%d='%f',", query, i, 0.0);
 				}else{
@@ -87,7 +87,7 @@ public SQL_OnSpeedrunCheckLoad(Handle:owner, Handle:hndl, const String:error[], 
 	{
 		Format(query, sizeof(query), "INSERT INTO times VALUES(null, '%s', '%d', '%s', '%d',", steamid, processingClass[client], cMap, datetime);
 
-		for(int i = 0; i < 32; i++){
+		for(new i = 0; i < 32; i++){
 			if(i == 0){
 				Format(query, sizeof(query), "%s '%f',", query, 0.0);
 			}else{
@@ -138,9 +138,9 @@ public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any
 }
 
 public SpeedrunOnGameFrame(){
-	for(int i = 0; i < 32; i++){
+	for(new i = 0; i < 32; i++){
 		if(speedrunStatus[i]==1){
-			for(int j = 0; j < numZones; j++){
+			for(new j = 0; j < numZones; j++){
 				if(IsInZone(i, j) && zoneTimes[i][j] == 0.0 && j != 0 && j==nextCheckpoint[i]) {
 					zoneTimes[i][j] = GetEngineTime();
 					if(j != numZones-1){
@@ -154,10 +154,10 @@ public SpeedrunOnGameFrame(){
 						PrintToChat(i, "\x01[\x03JA\x01] Finished in %s", timeString);
 						speedrunStatus[i] = 2;
 
-						processingClass[i] = view_as<int>TF2_GetPlayerClass(i);
+						processingClass[i] = int:TF2_GetPlayerClass(i);
 						processingZoneTimes[i] = zoneTimes[i];
 
-						for(int h = 0; h < 32; h++){
+						for(new h = 0; h < 32; h++){
 							zoneTimes[i][h] = 0.0;
 						}
 						processSpeedrun(i);
@@ -258,7 +258,7 @@ public Action:cmdShowPR(client,args){
 	if(IsClientObserver(client)){
 		class = 3;
 	}else{
-		class = view_as<int>TF2_GetPlayerClass(client);
+		class = int:TF2_GetPlayerClass(client);
 	}
 
 
@@ -334,7 +334,7 @@ public Action:cmdShowWR(client,args){
 	if(IsClientObserver(client)){
 		class = 3;
 	}else{
-		class = view_as<int>TF2_GetPlayerClass(client);
+		class = int:TF2_GetPlayerClass(client);
 	}
 
 
@@ -420,7 +420,7 @@ public Action:cmdToggleSpeedrun(client,args){
 public RestartSpeedrun(client){
 	new Float:v[3];
 	speedrunStatus[client] = 2;
-	for(int i = 0; i < 32; i++){
+	for(new i = 0; i < 32; i++){
 		zoneTimes[client][i] = 0.0;
 	}
 	lastFrameInStartZone[client] = false;
@@ -444,7 +444,7 @@ public Action:cmdClearZones(client,args){
 		return Plugin_Handled;
 	}
 
-	for(int i = 0; i < numZones; i++){
+	for(new i = 0; i < numZones; i++){
 		ShowZone(client, i);
 	}
 	new String:query[1024];
@@ -482,7 +482,7 @@ public Action:cmdShowZones(client,args){
 		return Plugin_Handled;
 	}
 
-	for(int i = 0; i < numZones; i++){
+	for(new i = 0; i < numZones; i++){
 		ShowZone(client, i);
 	}
 
@@ -494,7 +494,7 @@ public Action:cmdShowZones(client,args){
 
 
 public Action:ClearMapSpeedrunInfo(){
-	for(int i = 0; i < 32; i++){
+	for(new i = 0; i < 32; i++){
 		zoneBottom[i][0] = 0.0;
 		zoneBottom[i][1] = 0.0;
 		zoneBottom[i][2] = 0.0;
@@ -502,7 +502,7 @@ public Action:ClearMapSpeedrunInfo(){
 		zoneTop[i][1] = 0.0;
 		zoneTop[i][2] = 0.0;
 
-		for(int j = 0; j < 32; j++){
+		for(new j = 0; j < 32; j++){
 			zoneTimes[i][j] = 0.0;
 			processingZoneTimes[i][j] = 0.0;
 		}
@@ -512,7 +512,7 @@ public Action:ClearMapSpeedrunInfo(){
 		speedrunStatus[i] = 0;
 	}
 
-	for(int j = 0; j < 9; j++){
+	for(new j = 0; j < 9; j++){
 		recordTime[j] = 99999999.99;
 	}
 	numZones = 0;
@@ -560,7 +560,7 @@ public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:d
 			zoneTop[numZones][2] = SQL_FetchFloat(hndl, 5);
 		}
 		new String:query[1024] = "";
-		for(int i = 0; i < 9; i++){
+		for(new i = 0; i < 9; i++){
 			Format(query, sizeof(query), "SELECT c%d FROM times WHERE MapName='%s' AND class='%d' ORDER BY c%d ASC LIMIT 1", numZones-1, cMap, i, numZones-1);
 			SQL_TQuery(g_hDatabase, SQL_OnRecordLoad, query, i);
 		}

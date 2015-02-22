@@ -215,7 +215,10 @@
 #endif
 
 #include <steamtools>
+
+#undef REQUIRE_PLUGIN
 #include <updater>
+#define REQUIRE_PLUGIN
 
 #define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
 //#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
@@ -226,7 +229,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.0"
+#define PLUGIN_VERSION "0.8.1"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by talkingmelon, happs"
 
@@ -607,6 +610,8 @@ HookFunc(entity)
 
 
 
+
+
 public OnMapStart()
 {
 	if (GetConVarBool(g_hPluginEnabled))
@@ -665,7 +670,7 @@ public OnClientDisconnect(client)
 	}
 
 	speedrunStatus[client] = 0;
-	for(int i = 0; i < 32; i++){
+	for(new i = 0; i < 32; i++){
 		zoneTimes[client][i] = 0.0;
 	}
 	lastFrameInStartZone[client] = false;
@@ -2421,7 +2426,7 @@ Teleport(client)
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
 	}
-	new g_iClass = view_as<int>TF2_GetPlayerClass(client);
+	new g_iClass = int:TF2_GetPlayerClass(client);
 	new g_iTeam = GetClientTeam(client);
 	decl String:g_sClass[32], String:g_sTeam[32];
 	new Float:g_vVelocity[3];
@@ -3109,7 +3114,7 @@ public Native_JA_ReloadPlayerSettings(Handle:plugin, numParams)
 /*****************************************************************************************************************
 												Player Events
 *****************************************************************************************************************/
-public Action:OnPlayerStartTouchFuncRegenerate(int entity, int other)
+public Action:OnPlayerStartTouchFuncRegenerate(entity, other)
 {
 	if(other <= MaxClients && GetArraySize(hArray_NoFuncRegen) > 0 && FindValueInArray(hArray_NoFuncRegen,other) != -1)
 	{
@@ -3171,7 +3176,7 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 
-	new client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = view_as<int>TF2_GetPlayerClass(client), entity;
+	new client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = int:TF2_GetPlayerClass(client), entity;
 	decl String:g_sClass[33], String:playerName[64], String:cpName[32], String:s_area[32];
 	
 	if (!g_bCPTouched[client][area] || g_bRace[client] != 0)
@@ -3332,7 +3337,7 @@ public Action:eventPlayerChangeClass(Handle:event, const String:name[], bool:don
 	
 	GetClientAuthId(client,AuthId_Steam2, steamid, sizeof(steamid));
 
-	new class = view_as<int>TF2_GetPlayerClass(client);
+	new class = int:TF2_GetPlayerClass(client);
 	Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(g_iMapClass));
 
 	g_fLastSavePos[client][0] = 0.0;
