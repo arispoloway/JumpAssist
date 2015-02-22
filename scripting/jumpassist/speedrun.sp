@@ -764,6 +764,8 @@ public Action:cmdSetStart(client, args){
 
 
 
+	startLoc = l;
+	startAng = a;
 	sLoc = l;
 	sAng = a;
 
