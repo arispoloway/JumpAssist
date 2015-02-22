@@ -444,9 +444,6 @@ public Action:cmdClearZones(client,args){
 		return Plugin_Handled;
 	}
 
-	for(new i = 0; i < numZones; i++){
-		ShowZone(client, i);
-	}
 	new String:query[1024];
 	new Handle:hQuery;
 	Format(query, sizeof(query), "DELETE FROM zones WHERE MapName='%s'", cMap);
@@ -458,6 +455,16 @@ public Action:cmdClearZones(client,args){
 		PrintToChat(client, "\x01[\x03JA\x01] An error occurred: %s", err);
 	}
 	SQL_UnlockDatabase(g_hDatabase);
+
+	for(new i = 0; i < 32; i++){
+		zoneBottom[i][0] = 0.0;
+		zoneBottom[i][1] = 0.0;
+		zoneBottom[i][2] = 0.0;
+		zoneTop[i][0] = 0.0;
+		zoneTop[i][1] = 0.0;
+		zoneTop[i][2] = 0.0;
+	}
+	
 	PrintToChat(client, "\x01[\x03JA\x01] All zones cleared");
 	return Plugin_Continue;
 }
