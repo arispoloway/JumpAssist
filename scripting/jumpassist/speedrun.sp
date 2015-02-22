@@ -561,7 +561,7 @@ public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:d
 		}
 		new String:query[1024] = "";
 		for(int i = 0; i < 9; i++){
-			Format(query, sizeof(query), "SELECT c%d FROM times WHERE MapName='%s' AND class='%d' ORDER BY 'c%d' ASC LIMIT 1", numZones-1, cMap, i, numZones-1);
+			Format(query, sizeof(query), "SELECT c%d FROM times WHERE MapName='%s' AND class='%d' ORDER BY c%d ASC LIMIT 1", numZones-1, cMap, i, numZones-1);
 			SQL_TQuery(g_hDatabase, SQL_OnRecordLoad, query, i);
 		}
 		
