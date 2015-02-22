@@ -77,7 +77,7 @@ public SQL_OnSpeedrunCheckLoad(Handle:owner, Handle:hndl, const String:error[], 
 			new String:clientName[64], String:message[256];
 			GetClientName(client, clientName, sizeof(clientName));
 			new Float:time = processingZoneTimes[client][numZones-1] - processingZoneTimes[client][0];
-			Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 map run: \x06%s\x01", clientName, GetClassname(processingClass[client]), TimeFormat(time));
+			Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 map run: \x04%s\x01", clientName, GetClassname(processingClass[client]), TimeFormat(time));
 			PrintToChatAll(message);
 		}
 
@@ -125,13 +125,13 @@ public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any
 			recordTime[processingClass[client]] = time;
 			
 			if(previousRecord == 99999999.99){
-				Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01 set the map record as \x05%s\x01 with time \x06%s\x01!", clientName, GetClassname(processingClass[client]), TimeFormat(time));
+				Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01 set the map record as \x05%s\x01 with time \x04%s\x01!", clientName, GetClassname(processingClass[client]), TimeFormat(time));
 			}else{
-				Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01 broke the map record as \x05%s\x01 by \x06%s\x01 with time \x06%s\x01!", clientName, GetClassname(processingClass[client]), TimeFormat(previousRecord-time), TimeFormat(time));
+				Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01 broke the map record as \x05%s\x01 by \x04%s\x01 with time \x04%s\x01!", clientName, GetClassname(processingClass[client]), TimeFormat(previousRecord-time), TimeFormat(time));
 			}
 			
 		}else{
-			Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 map run: \x06%s\x01", clientName, GetClassname(processingClass[client]), TimeFormat(time));
+			Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 map run: \x04%s\x01", clientName, GetClassname(processingClass[client]), TimeFormat(time));
 		}
 		PrintToChatAll(message);
 	}
@@ -297,7 +297,7 @@ public SQL_OnSpeedrunListingSubmit(Handle:owner, Handle:hndl, const String:error
 		}else{
 			SQL_FetchRow(hQuery);
 			SQL_FetchString(hQuery, 0, playerName, sizeof(playerName));
-			Format(toPrint, sizeof(toPrint), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 - \x03%s\x01: \x06%s\x01", playerName, mapName, class, timeString);
+			Format(toPrint, sizeof(toPrint), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 - \x03%s\x01: \x04%s\x01", playerName, mapName, class, timeString);
 		}
 		SQL_UnlockDatabase(g_hDatabase);
 
@@ -464,7 +464,7 @@ public Action:cmdClearZones(client,args){
 		zoneTop[i][1] = 0.0;
 		zoneTop[i][2] = 0.0;
 	}
-	
+	numZones = 0;
 	PrintToChat(client, "\x01[\x03JA\x01] All zones cleared");
 	return Plugin_Continue;
 }
