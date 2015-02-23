@@ -229,7 +229,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.3"
+#define PLUGIN_VERSION "0.8.4"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by talkingmelon, happs"
 
