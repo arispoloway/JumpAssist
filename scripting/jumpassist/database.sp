@@ -12,7 +12,6 @@ new bool:g_bBeatTheMap[MAXPLAYERS+1];
 new bool:g_bUsedReset[MAXPLAYERS+1];
 new bool:g_bSpeedRun[MAXPLAYERS+1];
 new bool:g_bUnkillable[MAXPLAYERS+1];
-new bool:g_bRegen = false;
 new bool:g_bLateLoad = false;
 
 

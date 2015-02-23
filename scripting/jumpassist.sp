@@ -374,10 +374,18 @@ public OnPluginStart()
 	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_GENERIC, "Sets the map start location for speedrunning");
 	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_GENERIC, "Adds a checkpoint or end zone for speedrunning");
 	RegAdminCmd("sm_clearzones", cmdClearZones, ADMFLAG_GENERIC, "Deletes all zones on the current map");
+	RegAdminCmd("sm_cleartimes", cmdClearTimes, ADMFLAG_GENERIC, "Deletes all times on the current map");
+	RegAdminCmd("sm_sr_force_reload", cmdSpeedrunForceReload, ADMFLAG_GENERIC, "Deletes all times on the current map");
 	RegConsoleCmd("sm_showzones", cmdShowZones, "Shows all zones of the map");
+	RegConsoleCmd("sm_rmtime", cmdRemoveTime, "Removes your time on the map");
+	RegConsoleCmd("sm_showzone", cmdShowZone, "Shows the current zone and says what zone it is");
+	RegConsoleCmd("sm_sz", cmdShowZone, "Shows the current zone and says what zone it is");
 	RegConsoleCmd("sm_speedrun", cmdToggleSpeedrun, "Enables/disables speedrunning");
+	RegConsoleCmd("sm_sr", cmdToggleSpeedrun, "Enables/disables speedrunning");
 	RegConsoleCmd("sm_pr", cmdShowPR, "Shows your personal record");
 	RegConsoleCmd("sm_wr", cmdShowWR, "Shows the map record");
+	RegConsoleCmd("sm_top", cmdShowTop, "Shows the map record");
+	//RegConsoleCmd("sm_stest", cmdTest, "Shows the map record");
 	//RegConsoleCmd("sm_top", cmdShowTop, "Shows the top speedruns of the map");
 
 	// ROOT COMMANDS, they're set to root users for a reason.
@@ -587,7 +595,6 @@ Hook_Func_regenerate()
 	new entity = -1;
 	while ((entity = FindEntityByClassname(entity, "func_regenerate")) != INVALID_ENT_REFERENCE) {
 		// Support for concmap*, and quad* maps that are imported from TFC.
-		g_bRegen = true;
 		HookFunc(entity);
 	}
 }
@@ -647,7 +654,9 @@ public OnMapStart()
 			g_iCPs++;
 		}
 
-		if(databaseConfigured){ LoadMapSpeedrunInfo(); }
+		if(databaseConfigured){ 
+			LoadMapSpeedrunInfo(); 
+		}
 
 		Hook_Func_regenerate();
 
@@ -688,6 +697,7 @@ public OnClientPutInServer(client)
 {
 	if (GetConVarBool(g_hPluginEnabled))
 	{
+
 		if(hSpeedrunEnabled){
 			UpdateSteamID(client);
 		}
@@ -2858,7 +2868,7 @@ SendToStart(client)
 
 	g_bUsedReset[client] = true;
 	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
-			RestartSpeedrun(client);
+		RestartSpeedrun(client);
 	}else{
 		TF2_RespawnPlayer(client);
 	}
@@ -3377,6 +3387,14 @@ public Action:eventPlayerChangeTeam(Handle:event, const String:name[], bool:dont
 	{
 		g_fOrigin[client][0] = 0.0; g_fOrigin[client][1] = 0.0; g_fOrigin[client][2] = 0.0;
 		g_fAngles[client][0] = 0.0; g_fAngles[client][1] = 0.0; g_fAngles[client][2] = 0.0;
+		if(speedrunStatus[client]){
+			PrintToChat(client, "\x01[\x03JA\x01] Speedrun cancelled");
+		}
+		speedrunStatus[client] = 0;
+		for(new i = 0; i < 32; i++){
+			zoneTimes[client][i] = 0.0;
+		}
+		lastFrameInStartZone[client] = false;
 	} else {
 		CreateTimer(0.1, timerTeam, client);
 	}

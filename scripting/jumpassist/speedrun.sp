@@ -157,9 +157,7 @@ public SpeedrunOnGameFrame(){
 						processingClass[i] = int:TF2_GetPlayerClass(i);
 						processingZoneTimes[i] = zoneTimes[i];
 
-						for(new h = 0; h < 32; h++){
-							zoneTimes[i][h] = 0.0;
-						}
+
 						processSpeedrun(i);
 					}
 					skippedCheckpointMessage[i] = false;
@@ -168,6 +166,9 @@ public SpeedrunOnGameFrame(){
 					skippedCheckpointMessage[i] = true;
 				}
 				if(!IsInZone(i, 0) && lastFrameInStartZone[i]){
+					for(new h = 0; h < 32; h++){
+						zoneTimes[i][h] = 0.0;
+					}
 					PrintToChat(i, "\x01[\x03JA\x01] Speedrun started");
 					nextCheckpoint[i] = 1;
 					skippedCheckpointMessage[i] = false;
@@ -269,6 +270,7 @@ public Action:cmdShowPR(client,args){
 	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunListingSubmit, query, client);
 	return Plugin_Continue;
 }
+
 public SQL_OnSpeedrunListingSubmit(Handle:owner, Handle:hndl, const String:error[], any:data){
 	new client = data;
 	if (hndl == INVALID_HANDLE)
@@ -309,6 +311,76 @@ public SQL_OnSpeedrunListingSubmit(Handle:owner, Handle:hndl, const String:error
 	}
 }
 
+public SQL_OnSpeedrunMultiListingSubmit(Handle:owner, Handle:hndl, const String:error[], any:data){
+	new client = data;
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnSpeedrunListingSubmit() - Query failed! %s", error);
+	}
+	else if(SQL_GetRowCount(hndl))
+	{	
+		new Handle:menu;
+		menu = BuildMultiListingMenu(hndl);
+		DisplayMenu(menu, client, MENU_TIME_FOREVER);
+
+
+		
+	}else{
+		PrintToChat(client, "\x01[\x03JA\x01] No records exists");
+	}
+}
+
+Handle:BuildMultiListingMenu(Handle:hndl){
+	new String:mapName[32], String:steamid[32], String:class[128], Float:time, String:timeString[128], String:query[1024];
+	new String:playerName[64], String:toPrint[128];
+	new Handle:hQuery;
+	new String:err[256];
+	new id, String:idString[16];
+
+	new Handle:m;
+	m = CreateMenu(Menu_MultiListing);
+
+	//NOT VERY EFFICIENT WITH THE WHOLE STEAMID THING
+	for(new i = 0; i < SQL_GetRowCount(hndl); i++){
+		SQL_FetchRow(hndl);
+
+		SQL_FetchString(hndl, 0, mapName, sizeof(mapName));
+		SQL_FetchString(hndl, 1, steamid, sizeof(steamid));
+		time = SQL_FetchFloat(hndl, 2);
+		timeString = TimeFormat(time);
+		class = GetClassname(SQL_FetchInt(hndl, 3));
+		id = SQL_FetchInt(hndl, 4);
+		Format(idString, sizeof(idString), "%d", id);
+		Format(query, sizeof(query), "SELECT name FROM steamids WHERE SteamID='%s'", steamid);
+
+		SQL_LockDatabase(g_hDatabase);
+		if((hQuery = SQL_Query(g_hDatabase, query)) == INVALID_HANDLE){
+			SQL_GetError(hQuery, err, sizeof(err));
+			Format(toPrint, sizeof(toPrint), "\x01[\x03JA\x01] An error occurred: %s", err);
+		}else{
+			SQL_FetchRow(hQuery);
+			SQL_FetchString(hQuery, 0, playerName, sizeof(playerName));
+			Format(toPrint, sizeof(toPrint), "( %d ) %s [%s-%s]: %s", i+1, timeString, mapName, class, playerName);
+		}
+		SQL_UnlockDatabase(g_hDatabase);
+
+		AddMenuItem(m, idString, toPrint);
+	}
+	CloseHandle(hQuery);
+	return m;
+}
+
+public Menu_MultiListing(Handle:menu, MenuAction:action, param1, param2){
+if (action == MenuAction_Select)
+	{
+		new String:info[32];
+
+		GetMenuItem(menu, param2, info, sizeof(info));
+
+		PrintToChat(param1, "You selected run ID #%s",info);
+ 
+	}
+}
 
 public Action:cmdShowWR(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -345,9 +417,44 @@ public Action:cmdShowWR(client,args){
 	return Plugin_Continue;
 }
 
-// public Action:cmdShowTop(client,args){
+public Action:cmdShowTop(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
 
-// }
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+	if(!IsSpeedrunMap()){
+		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
+		return Plugin_Handled;
+	}
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot use this command from rcon");
+		return Plugin_Handled;
+	}
+	new String:query[1024] = "", String:endtime[4], class;
+
+	if(args == 0 || 1){
+		if(IsClientObserver(client)){
+			class = 3;
+		}else{
+			class = int:TF2_GetPlayerClass(client);
+		}
+
+
+		Format(endtime, sizeof(endtime), "c%d", numZones-1);
+
+		Format(query, sizeof(query), "SELECT MapName, SteamID, %s, class, ID FROM times WHERE class='%d' AND MapName='%s' ORDER BY %s ASC LIMIT 50", endtime, class, cMap, endtime);
+	}else{
+		//TAKE THE || 1 OUT OF THE IF STATEMENT WHEN YOU IMPLIMENT THIS
+	}
+	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunMultiListingSubmit, query, client);
+	return Plugin_Continue;
+}
+
 
 public Action:cmdSpeedrunRestart(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -424,9 +531,116 @@ public RestartSpeedrun(client){
 		zoneTimes[client][i] = 0.0;
 	}
 	lastFrameInStartZone[client] = false;
+	ReSupply(client, g_iClientWeapons[client][0]);
+	ReSupply(client, g_iClientWeapons[client][1]);
+	ReSupply(client, g_iClientWeapons[client][2]);
+	new iMaxHealth = TF2_GetPlayerResourceData(client, TFResource_MaxHealth);
+	SetEntityHealth(client, iMaxHealth);
+	
 	TeleportEntity(client,startLoc,startAng,v);
 }
 
+public Action:cmdSpeedrunForceReload(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+	ClearMapSpeedrunInfo();
+	LoadMapSpeedrunInfo();
+
+	return Plugin_Continue;
+}
+
+
+public Action:cmdRemoveTime(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot remove times from rcon");
+		return Plugin_Handled;
+	}
+	if(IsClientObserver(client)){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot clear time as spectator");
+		return Plugin_Handled;
+	}
+
+	new String:query[1024];
+	new Handle:hQuery;
+	new String:steamid[32];
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+	new class=int:TF2_GetPlayerClass(client);
+	Format(query, sizeof(query), "DELETE FROM times WHERE MapName='%s' AND SteamID='%s' AND class='%d'", cMap, steamid, class);
+
+	SQL_LockDatabase(g_hDatabase);
+	if((hQuery = SQL_Query(g_hDatabase, query)) == INVALID_HANDLE){
+		new String:err[256];
+		SQL_GetError(hQuery, err, sizeof(err));
+		PrintToChat(client, "\x01[\x03JA\x01] An error occurred: %s", err);
+	}
+	SQL_UnlockDatabase(g_hDatabase);
+
+	new String:classString[128];
+	classString = GetClassname(class);
+	PrintToChat(client, "\x01[\x03JA\x01] %s time cleared", classString);
+	return Plugin_Continue;
+}
+
+
+public Action:cmdClearTimes(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot clear times from rcon");
+		return Plugin_Handled;
+	}
+
+	new String:query[1024];
+	new Handle:hQuery;
+	Format(query, sizeof(query), "DELETE FROM times WHERE MapName='%s'", cMap);
+
+	SQL_LockDatabase(g_hDatabase);
+	if((hQuery = SQL_Query(g_hDatabase, query)) == INVALID_HANDLE){
+		new String:err[256];
+		SQL_GetError(hQuery, err, sizeof(err));
+		PrintToChat(client, "\x01[\x03JA\x01] An error occurred: %s", err);
+	}
+	SQL_UnlockDatabase(g_hDatabase);
+
+	for(new i = 0; i < 9; i++){
+		recordTime[i] = 99999999.99;
+	}
+	for(new i = 0; i < 32; i++){
+		if(zoneTimes[i][numZones-1] != 0.0){
+			for(new j = 32; j < 32; j++){
+				zoneTimes[i][j] = 0.0;
+			}
+		}
+	}
+
+	PrintToChat(client, "\x01[\x03JA\x01] All times cleared");
+	return Plugin_Continue;
+}
 
 public Action:cmdClearZones(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -446,6 +660,30 @@ public Action:cmdClearZones(client,args){
 
 	new String:query[1024];
 	new Handle:hQuery;
+
+	Format(query, sizeof(query), "DELETE FROM times WHERE MapName='%s'", cMap);
+
+	SQL_LockDatabase(g_hDatabase);
+	if((hQuery = SQL_Query(g_hDatabase, query)) == INVALID_HANDLE){
+		new String:err[256];
+		SQL_GetError(hQuery, err, sizeof(err));
+		PrintToChat(client, "\x01[\x03JA\x01] An error occurred: %s", err);
+	}
+	SQL_UnlockDatabase(g_hDatabase);
+
+	for(new i = 0; i < 9; i++){
+		recordTime[i] = 99999999.99;
+	}
+	if(numZones){
+		for(new i = 0; i < 32; i++){
+			if(zoneTimes[i][numZones-1] != 0.0){
+				for(new j = 32; j < 32; j++){
+					zoneTimes[i][j] = 0.0;
+				}
+			}
+		}
+	}
+
 	Format(query, sizeof(query), "DELETE FROM zones WHERE MapName='%s'", cMap);
 
 	SQL_LockDatabase(g_hDatabase);
@@ -466,6 +704,9 @@ public Action:cmdClearZones(client,args){
 	}
 	numZones = 0;
 	PrintToChat(client, "\x01[\x03JA\x01] All zones cleared");
+
+
+
 	return Plugin_Continue;
 }
 
@@ -494,6 +735,48 @@ public Action:cmdShowZones(client,args){
 	}
 
 	ReplyToCommand(client, "\x01[\x03JA\x01] Showing all zones");
+	return Plugin_Continue;
+
+}
+
+public Action:cmdShowZone(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot show zones from rcon");
+		return Plugin_Handled;
+	}
+	if(IsClientObserver(client)){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot show zones as spectator");
+		return Plugin_Handled;
+	}
+	new bool:foundZone = false;
+	for(new i = 0; i < numZones; i++){
+		if(IsInZone(client, i)){
+			ShowZone(client, i);
+			if(i == 0){
+				ReplyToCommand(client, "\x01[\x03JA\x01] Showing \x05Start\x01 zone" );
+			}else if(i == numZones-1){
+				ReplyToCommand(client, "\x01[\x03JA\x01] Showing \x05Finish\x01 zone");
+			}else{
+				ReplyToCommand(client, "\x01[\x03JA\x01] Showing checkpoint \x05%d\x01", i);
+			}
+			foundZone = true;
+			break;
+		}
+	}
+	if(!foundZone){
+		ReplyToCommand(client, "\x01[\x03JA\x01] You are not in a zone");
+	}
+
 	return Plugin_Continue;
 
 }
@@ -827,6 +1110,30 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 	}
 }
 
+// public Action:cmdTest(client, args){
+// 	new String:test[24] = "abcdefghij";
+// 	new String:toPrint[128] = Substring(test, 3, 6);
+// 	PrintToChat(client, "%s", toPrint);
+// }
+
+
+
+
+// stock String:Substring(String:s[], startPos, endPos){
+// 	new String:toReturn[endPos-startPos];
+// 	strcopy(toReturn, endPos, s[startPos]);
+// 	return toReturn;
+// }
+
+// stock String:GetFullMapName(String:inputMapName){
+// 	new String:m[64] = "";
+// 	if(StrEqual(Substring(0,5), "jump_")){
+// 		m = inputMapName;
+// 	}else{
+// 		Format(m, sizeof(m), "jump_%s", inputMapName);
+// 	}
+// 	return m;
+// }
 
 
 
