@@ -409,13 +409,13 @@ public SQL_OnReloadPlayerData(Handle:owner, Handle:hndl, const String:error[], a
 public SQL_OnLoadPlayerData(Handle:owner, Handle:hndl, const String:error[], any:data) 
 { 
 	new client = data;
-
 	if (hndl == INVALID_HANDLE) 
 	{ 
 		LogError("OnLoadPlayerData() - Query failed! %s", error); 
 	} 
 	else if (SQL_GetRowCount(hndl)) 
 	{
+
 		SQL_FetchRow(hndl);
 		g_fOrigin[client][0] = SQL_FetchFloat(hndl, 0);
 		g_fOrigin[client][1] = SQL_FetchFloat(hndl, 1);
@@ -541,7 +541,6 @@ SavePlayerData(client)
 	
 	GetClientAbsOrigin(client, SavePos1[client]);
 	GetClientAbsAngles(client, SavePos2[client]);
-
 	Format(sQuery, sizeof(sQuery), "INSERT INTO `player_saves` VALUES(null, '%s', '%i', '%i', '%s', '%f', '%f', '%f', '%f', '%f', '%f', '%s')", sSteamID, class, sTeam, sMap, SavePos1[client][0], SavePos1[client][1], SavePos1[client][2], SavePos2[client][0], SavePos2[client][1], SavePos2[client][2], g_sCaps[client]);
 	
 	SavePos1[client][0] = 0.0;
@@ -614,16 +613,16 @@ ReloadPlayerData(client)
 LoadPlayerData(client) 
 {
 	if(IsFakeClient(client)){return; }
-	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
-
-	Steam_GetCSteamIDForClient(client, sSteamID, sizeof(sSteamID)); 
+	decl String:sQuery[1024], String:pMap[32];
+	decl String:SteamID[32];
+	GetClientAuthId(client, AuthId_Steam2, SteamID, sizeof(SteamID));
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);
 	new class = int:TF2_GetPlayerClass(client);
 
 
-	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", sSteamID, sTeam, class, pMap);
+	Format(sQuery, sizeof(sQuery), "SELECT save1, save2, save3, save4, save5, save6, capped FROM player_saves WHERE steamID = '%s' AND playerTeam = '%i' AND playerClass = '%i' AND playerMap = '%s'", SteamID, sTeam, class, pMap);
 	//PrintToServer(sSteamID);
 	SQL_TQuery(g_hDatabase, SQL_OnLoadPlayerData, sQuery, client, DBPrio_High);
 }
