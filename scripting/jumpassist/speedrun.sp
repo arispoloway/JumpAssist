@@ -1,3 +1,4 @@
+#include <smlib>
 
 new Float:startLoc[3], Float:startAng[3], Float:sLoc[3], Float:sAng[3], Float:bottomLoc[3], Float:topLoc[3];
 
@@ -142,8 +143,6 @@ public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any
 	}
 }
 
-
-
 public Action:cmdShowPR(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
 		return Plugin_Continue;
@@ -282,17 +281,18 @@ public Action:cmdShowTop(client,args){
 	new String:query[1024] = "", String:endtime[4], class;
 	new Handle:data = CreateArray(64);
 
-	if(args == 0 || 1){
-		if(IsClientObserver(client)){
-			class = 3;
-		}else{
-			class = int:TF2_GetPlayerClass(client);
-		}
+	if(IsClientObserver(client)){
+		class = 3;
+	}else{
+		class = int:TF2_GetPlayerClass(client);
+	}
+
+	if(args == 0){
+
 
 
 		Format(endtime, sizeof(endtime), "c%d", numZones-1);
 		Format(query, sizeof(query), "SELECT * FROM times WHERE class='%d' AND MapName='%s' ORDER BY %s ASC LIMIT 50", class, cMap, endtime);
-
 
 		PushArrayCell(data, client);
 		PushArrayCell(data, LISTING_RANKED);
@@ -301,7 +301,37 @@ public Action:cmdShowTop(client,args){
 
 
 	}else{
-		//TAKE THE || 1 OUT OF THE IF STATEMENT WHEN YOU IMPLIMENT THIS
+		new String:arg1[128], String:endTime[4], String:mapName[128], String:err[128];
+		GetCmdArg(1, arg1, sizeof(arg1));
+		mapName = GetFullMapName(arg1);
+
+		Format(query, sizeof(query), "SELECT * FROM times WHERE MapName='%s' LIMIT 1", mapName);
+		new Handle:hQ;
+		SQL_LockDatabase(g_hDatabase);
+
+		if((hQ = SQL_Query(g_hDatabase, query)) == INVALID_HANDLE){
+			SQL_GetError(hQ, err, sizeof(err));
+			new String:toPrint[128];
+			Format(toPrint, sizeof(toPrint), "\x01[\x03JA\x01] An error occurred: %s", err);
+			PrintToChat(client, toPrint);
+			return Plugin_Handled;
+		}else{
+			if(SQL_GetRowCount(hQ)){
+				SQL_FetchRow(hQ);
+				new finish = GetFinishCheckpoint(hQ);
+				Format(endTime, sizeof(endTime), "c%d", finish);
+
+			}else{
+				PrintToChat(client, "\x01[\x03JA\x01] No records exists");
+				return Plugin_Handled;
+			}
+		}
+		SQL_UnlockDatabase(g_hDatabase);
+		Format(query, sizeof(query), "SELECT * FROM times WHERE class='%d' AND MapName='%s' ORDER BY %s ASC LIMIT 50", class, mapName, endTime);
+		PushArrayCell(data, client);
+		PushArrayCell(data, LISTING_RANKED);
+		PushArrayString(data, mapName);
+		PushArrayCell(data, class);
 	}
 	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunMultiListingSubmit, query, data);
 	return Plugin_Continue;
@@ -341,6 +371,15 @@ Float:GetFinishTime(Handle:hndl){
 		}
 	}
 	return 0.0;
+}
+
+GetFinishCheckpoint(Handle:hndl){
+	for(new i = 7; i < 38; i++){
+		if(SQL_FetchFloat(hndl, i) == 0.0){
+			return(i-6);
+		}
+	}
+	return 0;
 }
 
 Handle:BuildMultiListingMenu(Handle:hndl, type, class, String:map[]){
@@ -452,8 +491,6 @@ public Action:cmdShowWR(client,args){
 	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunListingSubmit, query, client);
 	return Plugin_Continue;
 }
-
-
 
 public Action:cmdSpeedrunRestart(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -1151,30 +1188,32 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 	}
 }
 
-// public Action:cmdTest(client, args){
-// 	new String:test[24] = "abcdefghij";
-// 	new String:toPrint[128] = Substring(test, 3, 6);
-// 	PrintToChat(client, "%s", toPrint);
-// }
+
+
+/*public Action:cmdTest(client, args){
+	new String:testString[64];
+	Format(testString, sizeof(testString), "rush");
+	PrintToServer(testString[3]);
+}*/
 
 
 
+stock String:GetFullMapName(String:inputMapName[]){
+	new String:baseJump[5] = "jump_";
+	new String:m[128] = "";
 
-// stock String:Substring(String:s[], startPos, endPos){
-// 	new String:toReturn[endPos-startPos];
-// 	strcopy(toReturn, endPos, s[startPos]);
-// 	return toReturn;
-// }
+	//Substring magic
+	new String:toReturn[6];
+	strcopy(toReturn, 6, inputMapName[0]);
 
-// stock String:GetFullMapName(String:inputMapName){
-// 	new String:m[64] = "";
-// 	if(StrEqual(Substring(0,5), "jump_")){
-// 		m = inputMapName;
-// 	}else{
-// 		Format(m, sizeof(m), "jump_%s", inputMapName);
-// 	}
-// 	return m;
-// }
+	if(StrEqual(toReturn, baseJump, false)){
+		Format(m, sizeof(m), "%s", inputMapName);
+	}else{
+		Format(m, sizeof(m), "jump_%s", inputMapName);
+	}
+	return m;
+}
+
 
 public UpdateSteamID(client){
 	new String:query[1024] = "", String:steamid[32];
@@ -1275,91 +1314,4 @@ public bool:TraceEntityFilterPlayer(entity, contentsMask, any:data){
 
 stock ShowZone(client, zone){
 	Effect_DrawBeamBoxToClient(client, zoneBottom[zone], zoneTop[zone], g_BeamSprite, g_HaloSprite, 0, 30);
-}
-
-//From SMLIB
-stock Effect_DrawBeamBoxToClient(
-	client,
-	const Float:bottomCorner[3],
-	const Float:upperCorner[3],
-	modelIndex,
-	haloIndex,
-	startFrame=0,
-	frameRate=30,
-	Float:life=5.0,
-	Float:width=5.0,
-	Float:endWidth=5.0,
-	fadeLength=2,
-	Float:amplitude=1.0,
-	const color[4]={ 255, 0, 0, 255 },
-	speed=0
-) {
-    new clients[1];
-    clients[0] = client;
-    Effect_DrawBeamBox(clients, 1, bottomCorner, upperCorner, modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
-}
-
-stock Effect_DrawBeamBox(
-	clients[],
-	numClients,
-	const Float:bottomCorner[3],
-	const Float:upperCorner[3],
-	modelIndex,
-	haloIndex,
-	startFrame=0,
-	frameRate=30,
-	Float:life=5.0,
-	Float:width=5.0,
-	Float:endWidth=5.0,
-	fadeLength=2,
-	Float:amplitude=1.0,
-	const color[4]={ 255, 0, 0, 255 },
-	speed=0
-) {
-	// Create the additional corners of the box
-	decl Float:corners[8][3];
-
-	for (new i=0; i < 4; i++) {
-		Array_Copy(bottomCorner,	corners[i],		3);
-		Array_Copy(upperCorner,		corners[i+4],	3);
-	}
-
-	corners[1][0] = upperCorner[0];
-	corners[2][0] = upperCorner[0];
-	corners[2][1] = upperCorner[1];
-	corners[3][1] = upperCorner[1];
-	corners[4][0] = bottomCorner[0];
-	corners[4][1] = bottomCorner[1];
-	corners[5][1] = bottomCorner[1];
-	corners[7][0] = bottomCorner[0];
-
-    // Draw all the edges
-
-	// Horizontal Lines
-	// Bottom
-	for (new i=0; i < 4; i++) {
-		new j = ( i == 3 ? 0 : i+1 );
-		TE_SetupBeamPoints(corners[i], corners[j], modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
-		TE_Send(clients, numClients);
-	}
-
-	// Top
-	for (new i=4; i < 8; i++) {
-		new j = ( i == 7 ? 4 : i+1 );
-		TE_SetupBeamPoints(corners[i], corners[j], modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
-		TE_Send(clients, numClients);
-	}
-
-	// All Vertical Lines
-	for (new i=0; i < 4; i++) {
-		TE_SetupBeamPoints(corners[i], corners[i+4], modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
-		TE_Send(clients, numClients);
-	}
-}
-
-stock Array_Copy(const any:array[], any:newArray[], size)
-{
-	for (new i=0; i < size; i++) {
-		newArray[i] = array[i];
-	}
 }
