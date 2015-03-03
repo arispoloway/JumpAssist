@@ -1,4 +1,4 @@
-/*																	
+/*
              *     ,MMM8&&&.            *
                   MMMM88&&&&&    .
                  MMMM88&&&&&&&
@@ -28,7 +28,7 @@
 	**********************************************************************************************************************************
 	* Done:
 	* 0.6.1b - Minor performance improvement. (Constantly checking if the map had regen on every player profile loaded. Changed to check once per map.)
-	* 
+	*
 	* 0.6.2b - JumpAssist NOW REQUIRES SDKHOOKS to be installed.
 	* 0.6.2b - Fixed !superman not displaying the correct text/action after a team/class change.
 	* 0.6.2b - Re-did the ammo resupply. Correctly supports both jumper weapons now, and other unlocks (Not all weapons added yet).
@@ -60,10 +60,10 @@
 	* UNOFFICIAL UPDATES BY TALKINGMELON
 	* 0.7.1 - Regen is working better and skeys has less delay. Control points should work properly.
 	*		- JA can now be used without a database configured.
-	*		- Restart works properly. 
+	*		- Restart works properly.
 	*		- The system for saving locations for admins is now working properly
 	*		- Also general bugfixes
-	* 
+	*
 	* 0.7.2 - Moved skeys and added m1/m2 support
 	*		- Changed how commands are recognized to the way that is normally supported
 	*		- General bugfixes
@@ -80,7 +80,7 @@
 	*		- r_inv now works with argument targeting - ex !r_inv talkingmelon works now
 	*		- restart no longer displays twice
 	*		- When a player loads into a map, their previous caps will no longer be remembered - should fix the notification issue
-	*		- Sounds should play properly 
+	*		- Sounds should play properly
 	*		- r_info added
 	*		- r_spec added
 	* 		- r_set added
@@ -103,7 +103,7 @@
 	*		 - Fixed potential for tele notification spam
 	*		 - Improved the usability of the help menu
 	*
-	* 0.7.11 - Fixed timer team bug 
+	* 0.7.11 - Fixed timer team bug
 	*		 - Fixed SQL ReloadPlayerData bug (maybe?)
 	*
 	*
@@ -114,9 +114,9 @@
 	*
 	* TODO:
 
-	* give race a better UI		
+	* give race a better UI
 	* R_LIST TIMES AFTER PLAYER DC
-	*LOG TO SERVER WHEN THE MAPSET COMMAND IS USED 
+	*LOG TO SERVER WHEN THE MAPSET COMMAND IS USED
 	* STARTING A SECOND RACE WITH THE FIRST ONE STILL IN PROGRESS OFTEN GIVES - YOU ARE NOT THE RACE LOBBY LEADER if everyone types !r_leave it works
 
 
@@ -124,12 +124,12 @@
 	* Plugin cvar enabled for all functions
 	* ADD CVAR TO TOGGLE FINISH ALERT TO SERVER / FIX SPAM POSSIBLITY - SPEC POINTS REACHED BUG THING
 	* PLAYER GOT TO CP IN TIME NOT JUST PLAYER GOT TO CP - WOULD MAKE THE TIME PART GOODOODOOODOD
-	* TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED	
+	* TEST RACE SPEC AND ADD FUNCTIONALITY FOR ONLY SHOWING PEOPLE IN A RACE WHEN ATTACK1 AND 2 ARE USED
 	* rematch typa thing
 	* save pos before start of race then restore after
 	* Polish for release.
 	* Support for jtele with one argument
-	* Support for sequence of cps 
+	* Support for sequence of cps
 	*
 	*
 	*
@@ -173,9 +173,9 @@
 	* - Pizza Butt 8)
 	* - 0beezy
 	**********************************************************************************************************************************
-	
-	
-																	NOTES	
+
+
+																	NOTES
 	**********************************************************************************************************************************
 	*
 	* You must have a mysql or sqlite database named jumpassist and configure it in /addons/sourcemod/configs/databases.cfg
@@ -195,8 +195,8 @@
 	*
 	*
 	**********************************************************************************************************************************
-	
-	
+
+
 */
 #pragma semicolon 1
 
@@ -272,7 +272,7 @@ new speedrunStatus[32];
 #include "jumpassist/speedrun.sp"
 
 new Handle:g_hWelcomeMsg;
-new Handle:g_hCriticals; 
+new Handle:g_hCriticals;
 new Handle:g_hSuperman;
 new Handle:g_hSentryLevel;
 new Handle:g_hCheapObjects;
@@ -290,7 +290,7 @@ new String:szWebsite[128] = "http://www.jump.tf/";
 new String:szForum[128] = "http://tf2rj.com/forum/";
 new String:szJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0";
 
-public Plugin:myinfo = 
+public Plugin:myinfo =
 {
 	name = PLUGIN_NAME,
 	author = PLUGIN_AUTHOR,
@@ -321,7 +321,7 @@ public OnPluginStart()
 	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
 	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "1", "Turns speedrunning on/off", FCVAR_NOTIFY);
 
-	
+
 	// Jump Assist console commands
 	RegConsoleCmd("ja_help", cmdJAHelp, "Shows JA's commands.");
 	RegConsoleCmd("sm_hardcore", cmdToggleHardcore, "Sends you back to the beginning without deleting your save..");
@@ -346,7 +346,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_forums", cmdJumpForums, "Shows the jump.tf forums.");
 	RegConsoleCmd("sm_jumpassist", cmdJumpAssist, "Shows the forum page for JumpAssist.");
 	//RegConsoleCmd("sm_spec", cmdSpec, "Sets you as spectator of a player.");
-	
+
 	RegConsoleCmd("sm_race_list", cmdRaceList, "Lists players and their times in a race.");
 	RegConsoleCmd("sm_r_list", cmdRaceList, "Lists players and their times in a race.");
 	RegConsoleCmd("sm_race", cmdRaceInitialize, "Initializes a new race.");
@@ -385,6 +385,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_pr", cmdShowPR, "Shows your personal record");
 	RegConsoleCmd("sm_wr", cmdShowWR, "Shows the map record");
 	RegConsoleCmd("sm_top", cmdShowTop, "Shows the map record");
+	RegConsoleCmd("sm_pi", cmdShowPlayerInfo, "Shows the player's runs");
 	//RegConsoleCmd("sm_stest", cmdTest, "Shows the map record");
 	//RegConsoleCmd("sm_top", cmdShowTop, "Shows the top speedruns of the map");
 
@@ -396,7 +397,7 @@ public OnPluginStart()
 
 
 
-	
+
 	// Hooks
 	HookEvent("player_team", eventPlayerChangeTeam);
 	HookEvent("player_changeclass", eventPlayerChangeClass);
@@ -435,7 +436,7 @@ public OnPluginStart()
 	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
 
 	hArray_NoFuncRegen = CreateArray();
-	
+
 	for(new i = 0; i < MAXPLAYERS+1; i++){
 		if (IsValidClient(i))
 		{
@@ -461,7 +462,7 @@ public OnPluginStart()
 	}
 
 	Format(g_URLMap,sizeof(g_URLMap),"%s/%s/%s",UPDATE_URL_BASE,branch,UPDATE_URL_FILE);
-	
+
 	if (LibraryExists("updater"))
 	{
 		Updater_AddPlugin(g_URLMap);
@@ -469,7 +470,7 @@ public OnPluginStart()
 	} else {
 		LogMessage("Updater plugin not found.");
 	}
-	
+
 	ConnectToDatabase();
 	SetDesc();
 
@@ -539,7 +540,7 @@ public Action:Command_Update(client,args)
 		ReplyToCommand(client,"Updater not registered.");
 	} else {
 		ReplyToCommand(client,"Force update returned %s", Updater_ForceUpdate() ? "true" : "false");
-	
+
 	}
 	return Plugin_Handled;
 }
@@ -625,10 +626,10 @@ public OnMapStart()
 	{
 
 		for(new i = 0; i < MAXPLAYERS+1 ; i++){
-			ResetRace(i); 
+			ResetRace(i);
 		}
-	
-		
+
+
 		SetDesc();
 		if (g_hDatabase != INVALID_HANDLE)
 		{
@@ -643,10 +644,10 @@ public OnMapStart()
 
 		g_BeamSprite = PrecacheModel("materials/sprites/laser.vmt");
 		g_HaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
-		
+
 		// Change game rules to CP.
 		TF2_SetGameType();
-	
+
 		// Find caps, and store the number of them in g_iCPs.
 		new iCP = -1; g_iCPs = 0;
 		while ((iCP = FindEntityByClassname(iCP, "trigger_capture_area")) != -1)
@@ -654,8 +655,8 @@ public OnMapStart()
 			g_iCPs++;
 		}
 
-		if(databaseConfigured){ 
-			LoadMapSpeedrunInfo(); 
+		if(databaseConfigured){
+			LoadMapSpeedrunInfo();
 		}
 
 		Hook_Func_regenerate();
@@ -669,10 +670,10 @@ public OnClientDisconnect(client)
 	{
 		g_bHardcore[client] = false, g_bHPRegen[client] = false, g_bLoadedPlayerSettings[client] = false, g_bBeatTheMap[client] = false;
 		g_bGetClientKeys[client] = false, g_bSpeedRun[client] = false, g_bUnkillable[client] = false, Format(g_sCaps[client], sizeof(g_sCaps), "\0");
-		
+
 		EraseLocs(client);
 	}
-	
+
 	if(g_bRace[client] !=0)
 	{
 		LeaveRace(client);
@@ -685,7 +686,7 @@ public OnClientDisconnect(client)
 	lastFrameInStartZone[client] = false;
 
 	SetSkeysDefaults(client);
-	
+
 	new idx;
 	if((idx = FindValueInArray(hArray_NoFuncRegen,client)) != -1)
 	{
@@ -702,7 +703,7 @@ public OnClientPutInServer(client)
 			UpdateSteamID(client);
 		}
 		// Hook the client
-		if(IsValidClient(client)) 
+		if(IsValidClient(client))
 		{
 			SDKHook(client, SDKHook_WeaponEquipPost, SDKHook_OnWeaponEquipPost);
 		}
@@ -733,29 +734,29 @@ public Action:cmdRaceInitialize(client, args)
 		PrintToChat(client, "\x01[\x03JA\x01] You may not race while speedrunning");
 		return;
 	}
-	if (g_bSpeedRun[client]) 
+	if (g_bSpeedRun[client])
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
 	}
-	
+
 	if (g_iCPs == 0){
 		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
 		return;
 	}
-	
+
 	if(IsPlayerFinishedRacing(client))
 	{
 		LeaveRace(client);
 	}
-	
-	
+
+
 	if (IsClientRacing(client)){
 		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race.");
 		return;
 	}
-	
-	
+
+
 	g_bRace[client] = client;
 	g_bRaceStatus[client] = 1;
 	g_bRaceClassForce[client] = true;
@@ -763,17 +764,17 @@ public Action:cmdRaceInitialize(client, args)
 	new String:cpName[32];
 	new Handle:menu = CreateMenu(ControlPointSelector);
 	SetMenuTitle(menu, "Select End Control Point");
-	
+
 	new entity;
 	new String:buffer[32];
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1)
 	{
-		
+
 		new pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
 		GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 		IntToString(pIndex, buffer, sizeof(buffer));
 		AddMenuItem(menu, buffer, cpName);
-		
+
 	}
 	DisplayMenu(menu, client, 300);
 	return;
@@ -822,10 +823,10 @@ public Action:cmdRaceInvite(client, args)
 	if(args == 0){
 		new Handle:g_PlayerMenu = INVALID_HANDLE;
 		g_PlayerMenu = PlayerMenu();
-		
+
 		DisplayMenu(g_PlayerMenu, client, MENU_TIME_FOREVER);
 	}else{
-			
+
 		new String:arg1[32];
 		new String:clientName[128];
 		new String:client2Name[128];
@@ -840,21 +841,21 @@ public Action:cmdRaceInvite(client, args)
 			GetClientName(target, client2Name, sizeof(client2Name));
 			if(target != -1 && !speedrunStatus[target]){
 
-				
-			
+
+
 				PrintToChat(client, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
-				
+
 				Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[client]), clientName);
-				
+
 
 				panel = CreatePanel();
 				SetPanelTitle(panel, buffer);
 				DrawPanelItem(panel, "Accept");
 				DrawPanelItem(panel, "Decline");
-				
+
 				g_bRaceInvitedTo[target] = client;
 				SendPanelToClient(panel, target, InviteHandler, 15);
-				
+
 				CloseHandle(panel);
 			}else if(speedrunStatus[target]){
 				PrintToChat(client, "\x01[\x03JA\x01] %s is currently in a speedrun", client2Name);
@@ -862,7 +863,7 @@ public Action:cmdRaceInvite(client, args)
 		}
 	}
 	return Plugin_Continue;
-	
+
 }
 
 stock String:GetCPNameByIndex(index)
@@ -877,19 +878,19 @@ stock String:GetCPNameByIndex(index)
 			GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 		}
 	}
-	
+
 	return cpName;
 
 }
 
 Handle:PlayerMenu()
 {
-	
+
 	new Handle:menu = CreateMenu(Menu_InvitePlayers);
 	new String:buffer[128];
 	new String:clientName[128];
-	
-	
+
+
 	//SHOULDNT SHOW CURRENT PLAYER AND ALSO PLAYERS ALREADY IN A RACE BUT I NEED THAT FOR TESTING FOR NOW
 	for (new i = 1; i <= GetMaxClients(); i++)
 	{
@@ -899,11 +900,11 @@ Handle:PlayerMenu()
 			GetClientName(i, clientName, sizeof(clientName));
 			AddMenuItem(menu, buffer, clientName);
 		}
-		
+
 		SetMenuTitle(menu, "Select Players to Invite:");
-    
+
 	}
-	
+
 	return menu;
 
 }
@@ -916,33 +917,33 @@ public Menu_InvitePlayers(Handle:menu, MenuAction:action, param1, param2)
 		new String:client2Name[128];
 		new String:buffer[128];
 		new String:info[32];
-		
+
 		GetClientName(param1, clientName, sizeof(clientName));
 		GetMenuItem(menu, param2, info, sizeof(info));
 		GetClientName(StringToInt(info), client2Name, sizeof(client2Name));
-	
+
 		PrintToChat(param1, "\x01[\x03JA\x01] You have invited %s to race.", client2Name);
-		
-		
+
+
 		GetMenuItem(menu, param2, info, sizeof(info));
-		
+
 		Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[param1]), clientName);
-		
+
 
 		new Handle:panel = CreatePanel();
 		SetPanelTitle(panel, buffer);
 		DrawPanelItem(panel, "Accept");
 		DrawPanelItem(panel, "Decline");
-		
+
 		g_bRaceInvitedTo[StringToInt(info)] = param1;
 		SendPanelToClient(panel, StringToInt(info), InviteHandler, 15);
-		
+
 		CloseHandle(panel);
-	
+
 	}
 	else if (action == MenuAction_Cancel)
 	{
-	
+
 	}
 	else if (action == MenuAction_End)
 	{
@@ -958,12 +959,12 @@ public InviteHandler(Handle:menu, MenuAction:action, param1, param2)
 		// PrintToConsole(param1, "You selected item: %d", param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// } else if (action == MenuAction_Cancel) {
-		
+
 		// PrintToServer("Client %d's menu was cancelled.  Reason: %d", param1, param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// }
-	
-	
+
+
 	AlertInviteAcceptOrDeny(g_bRaceInvitedTo[param1], param1, param2);
 
 }
@@ -973,7 +974,7 @@ public AlertInviteAcceptOrDeny(client, client2, choice)
 	new String:clientName[128];
 	GetClientName(client2, clientName, sizeof(clientName));
 	if (choice == 1)
-	{	
+	{
 		if(HasRaceStarted(client)){
 			PrintToChat(client, "\x01[\x03JA\x01] This race has already started.");
 			return;
@@ -990,13 +991,13 @@ public AlertInviteAcceptOrDeny(client, client2, choice)
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %s has declined your request to race", clientName);
 	}
-	
-	
+
+
 }
 
 //THE WORST WORKAROUND YOU'VE EVER SEEN
 public Action:RaceCountdown(Handle:timer, any:raceID)
-{	
+{
 	PrintToRace(raceID, "****************************");
 	PrintToRace(raceID, "             Starting race in: 3");
 	PrintToRace(raceID, "****************************");
@@ -1004,7 +1005,7 @@ public Action:RaceCountdown(Handle:timer, any:raceID)
 
 }
 public Action:RaceCountdown2(Handle:timer, any:raceID)
-{	
+{
 	PrintToRace(raceID, "****************************");
 	PrintToRace(raceID, "                         2");
 	PrintToRace(raceID, "****************************");
@@ -1012,7 +1013,7 @@ public Action:RaceCountdown2(Handle:timer, any:raceID)
 
 }
 public Action:RaceCountdown1(Handle:timer, any:raceID)
-{	
+{
 	PrintToRace(raceID, "****************************");
 	PrintToRace(raceID, "                         1");
 	PrintToRace(raceID, "****************************");
@@ -1020,7 +1021,7 @@ public Action:RaceCountdown1(Handle:timer, any:raceID)
 
 }
 public Action:RaceCountdownGo(Handle:timer, any:raceID)
-{	
+{
 	UnlockRacePlayers(raceID);
 	PrintToRace(raceID, "****************************");
 	PrintToRace(raceID, "                        GO!");
@@ -1040,17 +1041,17 @@ public Action:cmdRaceList(client, args){
 	{
 		if(IsClientObserver(client)){
 			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget"); 
+			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 
 			if(!IsClientRacing(iClientToShow)){
-				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!"); 
+				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!");
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) { 
-				return; 
+			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
+				return;
 			}
 		}else{
-			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!"); 
+			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!");
 			return;
 		}
 	}else{
@@ -1071,7 +1072,7 @@ public Action:cmdRaceList(client, args){
 	DrawPanelText(panel, leaderFormatted);
 
 	DrawPanelText(panel, " ");
-	
+
 
 	for(new i = 0; i < MAXPLAYERS; i++){
 		if(g_bRaceFinishedPlayers[race][i] == 0){
@@ -1100,7 +1101,7 @@ public Action:cmdRaceList(client, args){
 			DrawPanelText(panel, name);
 		}
 	}
-	
+
 	DrawPanelText(panel, " ");
 
 	DrawPanelItem(panel, "Exit");
@@ -1116,7 +1117,7 @@ public ListHandler(Handle:menu, MenuAction:action, param1, param2)
 		// PrintToConsole(param1, "You selected item: %d", param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// } else if (action == MenuAction_Cancel) {
-		
+
 		// PrintToServer("Client %d's menu was cancelled.  Reason: %d", param1, param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// }
@@ -1135,17 +1136,17 @@ public Action:cmdRaceInfo(client, args)
 	{
 		if(IsClientObserver(client)){
 			iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget"); 
+			iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
 
 			if(!IsClientRacing(iClientToShow)){
-				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!"); 
+				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!");
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) { 
-				return; 
+			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
+				return;
 			}
 		}else{
-			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!"); 
+			PrintToChat(client, "\x01[\x03JA\x01] You are not in a race!");
 			return;
 		}
 	}else{
@@ -1204,7 +1205,7 @@ public Action:cmdRaceInfo(client, args)
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "Exit");
 	SendPanelToClient(panel, client, InfoHandler, 30);
-	
+
 	CloseHandle(panel);
 
 
@@ -1218,7 +1219,7 @@ public InfoHandler(Handle:menu, MenuAction:action, param1, param2)
 		// PrintToConsole(param1, "You selected item: %d", param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// } else if (action == MenuAction_Cancel) {
-		
+
 		// PrintToServer("Client %d's menu was cancelled.  Reason: %d", param1, param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// }
@@ -1233,7 +1234,7 @@ public Action:cmdRaceStart(client, args)
 	if (!IsValidClient(client)) { return; }
 	if (g_bRace[client] == 0)
 	{
-		PrintToChat(client, "\x01[\x03JA\x01] You are not hosting a race!"); 
+		PrintToChat(client, "\x01[\x03JA\x01] You are not hosting a race!");
 		return;
 	}
 	if (!IsRaceLeader(client, g_bRace[client]))
@@ -1246,19 +1247,19 @@ public Action:cmdRaceStart(client, args)
 		PrintToChat(client, "\x01[\x03JA\x01] The race has already started.");
 		return;
 	}
-	
+
 	LockRacePlayers(client);
 	ApplyRaceSettings(client);
 	new TFClassType:class = TF2_GetPlayerClass(client);
 	new team = GetClientTeam(client);
-	
+
 	g_bRaceStatus[client] = 2;
 	CreateTimer(1.0, RaceCountdown, client);
-	
+
 	SendRaceToStart(client, class, team);
 	PrintToRace(client, "Teleporting to race start!");
-	
-	
+
+
 }
 
 stock PrintToRace(raceID, String:message[])
@@ -1320,7 +1321,7 @@ public Action:cmdRaceLeave(client, args)
 	}
 	LeaveRace(client);
 	PrintToChat(client, "\x01[\x03JA\x01] You have left the race.");
-		
+
 }
 
 
@@ -1329,53 +1330,53 @@ public Action:cmdServerRace(client, args)
 {
 
 	cmdRaceInitializeServer(client, args);
-	
+
 }
 
 public Action:cmdRaceInitializeServer(client, args)
 {
 	if (!IsValidClient(client)) { return; }
-	if (g_bSpeedRun[client]) 
+	if (g_bSpeedRun[client])
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
 	}
-	
+
 	if (g_iCPs == 0){
 		PrintToChat(client, "\x01[\x03JA\x01] You may only race on maps with control points.");
 		return;
 	}
-	
+
 	if(IsPlayerFinishedRacing(client))
 	{
 		LeaveRace(client);
 	}
-	
-	
+
+
 	if (IsClientRacing(client)){
 		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race.");
 		return;
 	}
-	
-	
+
+
 	g_bRace[client] = client;
 	g_bRaceStatus[client] = 1;
 	g_bRaceClassForce[client] = true;
-	
+
 	new String:cpName[32];
 	new Handle:menu = CreateMenu(ControlPointSelectorServer);
 	SetMenuTitle(menu, "Select End Control Point");
-	
+
 	new entity;
 	new String:buffer[32];
 	while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1)
 	{
-		
+
 		new pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
 		GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 		IntToString(pIndex, buffer, sizeof(buffer));
 		AddMenuItem(menu, buffer, cpName);
-		
+
 	}
 	DisplayMenu(menu, client, 300);
 	return;
@@ -1390,27 +1391,27 @@ public ControlPointSelectorServer(Handle:menu, MenuAction:action, param1, param2
 		new String:info[32];
 		GetMenuItem(menu, param2, info, sizeof(info));
 		g_bRaceEndPoint[param1] = StringToInt(info);
-		
+
 		new String:buffer[128];
 		new String:clientName[128];
-		
+
 		GetClientName(param1, clientName, sizeof(clientName));
 		for (new i = 1; i <= GetMaxClients(); i++)
 		{
 			if (IsValidClient(i) && param1 != i)
 			{
-				
+
 				Format(buffer, sizeof(buffer), "You have been invited to race to %s by %s", GetCPNameByIndex(g_bRaceEndPoint[param1]), clientName);
-			
+
 
 				new Handle:panel = CreatePanel();
 				SetPanelTitle(panel, buffer);
 				DrawPanelItem(panel, "Accept");
 				DrawPanelItem(panel, "Decline");
-				
+
 				g_bRaceInvitedTo[i] = param1;
 				SendPanelToClient(panel, i, InviteHandler, 15);
-				
+
 				CloseHandle(panel);
 			}
 		}
@@ -1591,12 +1592,12 @@ stock LeaveRace(client){
 	if(race == 0){
 		return;
 	}
-	
+
 	if(GetPlayersInRace(race) == 0)
 	{
 		ResetRace(race);
 	}
-	
+
 	if(client == race)
 	{
 		if(GetPlayersInRace(race) == 1)
@@ -1630,8 +1631,8 @@ stock LeaveRace(client){
 							g_bRaceEndPoint[client] = 0;
 							g_bRaceStartTime[client] = 0.0;
 							g_bRaceFinishedPlayers[client] = a;
-							g_bRaceTimes[client] = b;							
-							
+							g_bRaceTimes[client] = b;
+
 							for (new j = 1; j <= GetMaxClients(); j++)
 							{
 								if (IsClientRacing(j) && !IsRaceLeader(j, race))
@@ -1639,11 +1640,11 @@ stock LeaveRace(client){
 									g_bRace[j] = newRace;
 								}
 							}
-							
+
 							return;
-							
-							
-							
+
+
+
 						}
 					}
 			}
@@ -1667,8 +1668,8 @@ stock LeaveRace(client){
 	new String:buffer[128];
 	GetClientName(client, clientName, sizeof(clientName));
 	Format(buffer, sizeof(buffer), "%s has left the race.", clientName);
-	
-	
+
+
 	PrintToRace(race, buffer);
 }
 
@@ -1694,7 +1695,7 @@ stock ResetRace(raceID)
 		g_bRaceTimes[raceID][i] = 0.0;
 		g_bRaceFinishedPlayers[raceID][i] = 0;
 	}
-	
+
 }
 
 
@@ -1738,7 +1739,7 @@ stock bool:IsClientInRace(client, race){
 }
 
 stock GetRaceStatus(client){
-	return g_bRaceStatus[g_bRace[client]]; 
+	return g_bRaceStatus[g_bRace[client]];
 }
 
 stock bool:IsRaceLeader(client, race){
@@ -1772,11 +1773,11 @@ stock bool:IsClientSpectatingRace(client, race){
 	}
 	new iClientToShow, iObserverMode;
 	iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
-	iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget"); 
-	if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) { 
-		return false; 
+	iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
+	if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
+		return false;
 	}
-	
+
 	if(IsClientInRace(iClientToShow, race)){
 		return true;
 	}
@@ -1950,7 +1951,7 @@ public Action:cmdToggleAmmo(client, args)
 
 	}
 	SetRegen(client, "Ammo", "z");
-	
+
 }
 
 public Action:cmdToggleHealth(client, args)
@@ -1966,7 +1967,7 @@ public Action:cmdToggleHealth(client, args)
 
 	}
 	SetRegen(client, "Health", "z");
-	
+
 }
 
 public Action:cmdToggleHardcore(client, args)
@@ -1978,7 +1979,7 @@ public Action:cmdToggleHardcore(client, args)
 		return;
 	}
 	Hardcore(client);
-	
+
 }
 
 
@@ -2002,11 +2003,11 @@ public Action:cmdJAHelp(client, args)
 	DrawPanelText(panel, " ");
 	DrawPanelItem(panel, "Exit");
 
-	
+
 	SendPanelToClient(panel, client, JAHelpHandler, 15);
-	
+
 	CloseHandle(panel);
-	
+
 	return;
 
 }
@@ -2015,14 +2016,14 @@ public JAHelpHandler(Handle:menu, MenuAction:action, param1, param2){
 	//1 is client
 	//2 is choice
 	new client = param1;
-	
+
 
 	if(param2 < 1 || param2 == 6){
 		return;
 	}
 	new Handle:panel;
 	panel = CreatePanel();
-	if(param2 == 1){	
+	if(param2 == 1){
 		SetPanelTitle(panel, "Save Help");
 		DrawPanelText(panel, "!save or !s - Saves your position");
 		DrawPanelText(panel, "!tele or !t - Teleports you to your saved position");
@@ -2063,7 +2064,7 @@ public JAHelpHandler(Handle:menu, MenuAction:action, param1, param2){
 	DrawPanelItem(panel, "Back");
 	DrawPanelItem(panel, "Exit");
 	SendPanelToClient(panel, client, HelpMenuHandler, 15);
-	
+
 	CloseHandle(panel);
 
 }
@@ -2133,7 +2134,7 @@ stock CheckBeggers(iClient)
 stock IsStringNumeric(const String:MyString[])
 {
 	new n=0;
-	while (MyString[n] != '\0') 
+	while (MyString[n] != '\0')
 	{
 		if (!IsCharNumeric(MyString[n]))
 		{
@@ -2152,7 +2153,7 @@ public Action:RunQuery(client, args)
 	}
 	decl String:query[1024];
 	GetCmdArgString(query, sizeof(query));
-	
+
 	SQL_TQuery(g_hDatabase, SQL_OnPlayerRanSQL, query, client);
 	return Plugin_Handled;
 }
@@ -2170,7 +2171,7 @@ public Action:cmdUnkillable(client, args)
 		return Plugin_Handled;
 	}
 
-	if (g_bSpeedRun[client]) 
+	if (g_bSpeedRun[client])
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return Plugin_Handled;
@@ -2195,7 +2196,7 @@ public Action:cmdUndo(client, args)
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_UndoSpeedRun");
 		return Plugin_Handled;
 	}
-	if (g_fLastSavePos[client][0] == 0.0) 
+	if (g_fLastSavePos[client][0] == 0.0)
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_UndoCant");
 		return Plugin_Handled;
@@ -2203,7 +2204,7 @@ public Action:cmdUndo(client, args)
 		g_fOrigin[client][0] = g_fLastSavePos[client][0]; g_fAngles[client][0] = g_fLastSaveAngles[client][0];
 		g_fOrigin[client][1] = g_fLastSavePos[client][1]; g_fAngles[client][1] = g_fLastSaveAngles[client][1];
 		g_fOrigin[client][2] = g_fLastSavePos[client][2]; g_fAngles[client][2] = g_fLastSaveAngles[client][2];
-		
+
 		g_fLastSavePos[client][0] = 0.0; g_fLastSavePos[client][1] = 0.0; g_fLastSavePos[client][2] = 0.0;
 
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Save_Undo");
@@ -2211,7 +2212,7 @@ public Action:cmdUndo(client, args)
 	}
 }
 public Action:cmdDoRegen(client, args)
-{	
+{
 	if(GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
 		ReplyToCommand(client, "\x01[\x03JA\x01] You may not change regen during a speedrun");
 		return Plugin_Handled;
@@ -2228,7 +2229,7 @@ public Action:cmdDoRegen(client, args)
 	{
 		SetRegen(client, "regen", "on");
 		return Plugin_Handled;
-	} else if (StrEqual(arg1, "off", false)) 
+	} else if (StrEqual(arg1, "off", false))
 	{
 		SetRegen(client, "regen", "off");
 		return Plugin_Handled;
@@ -2269,7 +2270,7 @@ public Action:cmdSendPlayer(client, args)
 
 		new target1 = FindTarget2(client, arg1, true, false);
 		new target2 = FindTarget2(client, arg2, true, false);
-		
+
 		if(speedrunStatus[target1]){
 			ReplyToCommand(client, "\x01[\x03JA\x01] You cannot send a player in a speedrun");
 			return Plugin_Handled;
@@ -2281,7 +2282,7 @@ public Action:cmdSendPlayer(client, args)
 		}
 		if (!target1 || !target2)
 		{
-			return Plugin_Handled;	
+			return Plugin_Handled;
 		}
 		new Float:TargetOrigin[3];
 		new Float:pAngle[3];
@@ -2294,7 +2295,7 @@ public Action:cmdSendPlayer(client, args)
 		pVec[2] = 0.0;
 
 		TeleportEntity(target1, TargetOrigin, pAngle, pVec);
-		
+
 		new String:target1_name[MAX_NAME_LENGTH];
 		new String:target2_name[MAX_NAME_LENGTH];
 
@@ -2398,7 +2399,7 @@ public Action:cmdReset(client, args)
 		{
 			return Plugin_Handled;
 		}
-		
+
 		SendToStart(client);
 		g_bUsedReset[client] = true;
 	}
@@ -2431,7 +2432,7 @@ Teleport(client)
 		return;
 	}
 
-	if (g_bSpeedRun[client]) 
+	if (g_bSpeedRun[client])
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
@@ -2466,7 +2467,7 @@ Teleport(client)
 SaveLoc(client)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	if (g_bSpeedRun[client]) 
+	if (g_bSpeedRun[client])
 	{
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
 		return;
@@ -2474,7 +2475,7 @@ SaveLoc(client)
 	if (g_bHardcore[client])
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Disabled");
 	else if(!IsPlayerAlive(client))
-		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Dead");	
+		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_Dead");
 	else if(!(GetEntityFlags(client) & FL_ONGROUND))
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Saves_InAir");
 	else if(GetEntProp(client, Prop_Send, "m_bDucked") == 1)
@@ -2527,7 +2528,7 @@ Hardcore(client)
 	{
 		return;
 	}
-	if (!g_bHardcore[client]) 
+	if (!g_bHardcore[client])
 	{
 		g_bHardcore[client] = true;
 		g_bHPRegen[client] = false;
@@ -2611,14 +2612,14 @@ SetRegen(client, String:RegenType[], String:RegenToggle[])
 	{
 		g_bAmmoRegen[client] = true;
 		g_bHPRegen[client] = true;
-		
+
 		if (g_bHardcore[client]) { g_bHardcore[client] = false; }
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_On");
 	} else if (StrEqual(RegenType, "Regen", false) && StrEqual(RegenToggle, "off", false))
 	{
 		g_bAmmoRegen[client] = false;
 		g_bHPRegen[client] = false;
-		
+
 		if (g_bHardcore[client]) { g_bHardcore[client] = false; }
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Regen_Off");
 	} else {
@@ -2660,33 +2661,33 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 			SetEntityHealth(client, iMaxHealth);
 		}
 	}
-	
+
 	if(g_bRaceLocked[client])
 	{
 		buttons &= ~IN_ATTACK;
 		buttons &= ~IN_ATTACK2;
-		if(buttons & IN_BACK) 
+		if(buttons & IN_BACK)
 		{
 			return Plugin_Handled;
 		}
-		if(buttons & IN_FORWARD) 
+		if(buttons & IN_FORWARD)
 		{
 			return Plugin_Handled;
 		}
-		if(buttons & IN_MOVERIGHT) 
+		if(buttons & IN_MOVERIGHT)
 		{
 			return Plugin_Handled;
 		}
-		if(buttons & IN_MOVELEFT) 
+		if(buttons & IN_MOVELEFT)
 		{
 			return Plugin_Handled;
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
-		
-		
+
+
 
 public SDKHook_OnWeaponEquipPost(client, weapon)
 {
@@ -2732,7 +2733,7 @@ stock ReSupply(client, iWeapon)
 			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
 			SetAmmo(client, iWeapon, 60);
 		}
-		
+
 		// Ullapool caber
 		/* Removed
 		case 307:
@@ -2744,7 +2745,7 @@ stock ReSupply(client, iWeapon)
 			}
 		}
 		*/
-		
+
 		// Stickybomb Launchers
 		case 20, 207:
 		{
@@ -2788,7 +2789,7 @@ EraseLocs(client)
 
 	g_fOrigin[client][0] = 0.0; g_fOrigin[client][1] = 0.0; g_fOrigin[client][2] = 0.0;
 	g_fAngles[client][0] = 0.0; g_fAngles[client][1] = 0.0; g_fAngles[client][2] = 0.0;
-	
+
 	for(new j = 0; j < 8; j++)
 	{
 		g_bCPTouched[client][j] = false;
@@ -2834,18 +2835,18 @@ LockCPs()
 public Action:cmdRestart(client, args)
 {
 	if (!IsValidClient(client) || IsClientObserver(client) || !GetConVarBool(g_hPluginEnabled))
-	{		
+	{
 		return Plugin_Handled;
 	}
 	if (skillsrank)
-	{	
+	{
 		if (IsPlayerBusy(client))
 		{
 			PrintToChat(client, "\x01[\x03JA\x01] %t", "General_Busy");
 			return Plugin_Handled;
 		}
 	}
-	
+
 	EraseLocs(client);
 	if(databaseConfigured)
 	{
@@ -2895,7 +2896,7 @@ bool:IsValidClient( client )
 {
     if ( !( 1 <= client <= MaxClients ) || !IsClientInGame(client) || IsFakeClient(client))
         return false;
-    
+
     return true;
 }
 public jteleHandler(Handle:menu, MenuAction:action, client, item)
@@ -2924,12 +2925,12 @@ stock FindTarget2(client, const String:target[], bool:nobots = false, bool:immun
 	{
 		flags |= COMMAND_FILTER_NO_IMMUNITY;
 	}
-	
+
 	if ((target_count = ProcessTargetString(
 			target,
-			client, 
-			target_list, 
-			1, 
+			client,
+			target_list,
+			1,
 			flags,
 			target_name,
 			sizeof(target_name),
@@ -3031,7 +3032,7 @@ stock SetCvarValues()
 	if (GetConVarBool(g_hCheapObjects))
 		SetConVarInt(FindConVar("tf_cheapobjects"), 1, false, false);
 	if (GetConVarBool(g_hAmmoCheat))
-		SetConVarInt(FindConVar("tf_sentrygun_ammocheat"), 1, false, false); 
+		SetConVarInt(FindConVar("tf_sentrygun_ammocheat"), 1, false, false);
 }
 /*****************************************************************************************************************
 													Natives
@@ -3040,7 +3041,7 @@ public Native_JA_GetSettings(Handle:plugin, numParams)
 {
 	new setting = GetNativeCell(1);
 	new client = GetNativeCell(2);
-	
+
 	if (client != -1)
 	{
 		// Client is only needed for all but 1 setting so far.
@@ -3053,7 +3054,7 @@ public Native_JA_GetSettings(Handle:plugin, numParams)
 			return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 		}
 	}
-	
+
 	switch (setting)
 	{
 		case 1: { return g_iMapClass; }
@@ -3074,7 +3075,7 @@ public Native_JA_ClearSave(Handle:plugin, numParams)
 	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not connected", client);
 	}
-	
+
 	EraseLocs(client);
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Native_ClearSave");
 	return true;
@@ -3095,7 +3096,7 @@ public Native_JA_PrepSpeedRun(Handle:plugin, numParams)
 	EraseLocs(client);
 
 	if (g_bUnkillable[client]) { g_bUnkillable[client] = false; SetEntProp(client, Prop_Data, "m_takedamage", 2, 1); }
-	
+
 	g_bSpeedRun[client] = true;
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Native_ClearSave");
 
@@ -3148,7 +3149,7 @@ public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBr
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 	new client = GetClientOfUserId(GetEventInt(event, "userid")), obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
-	
+
 	if (obj == 2)
 	{
 		if (GetConVarInt(g_hSentryLevel) == 3)
@@ -3188,14 +3189,14 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 
 	new client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = int:TF2_GetPlayerClass(client), entity;
 	decl String:g_sClass[33], String:playerName[64], String:cpName[32], String:s_area[32];
-	
+
 	if (!g_bCPTouched[client][area] || g_bRace[client] != 0)
 	{
-		
+
 
 		Format(g_sClass, sizeof(g_sClass), "%s", GetClassname(class));
 		GetClientName(client, playerName, 64);
-		
+
 		while ((entity = FindEntityByClassname(entity, "team_control_point")) != -1)
 		{
 			new pIndex = GetEntProp(entity, Prop_Data, "m_iPointIndex");
@@ -3220,7 +3221,7 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 					timeString = TimeFormat(timeTaken);
 
 					GetClientName(client, clientName, sizeof(clientName));
-					
+
 					if(RoundToNearest(g_bRaceFirstTime[g_bRace[client]]) == 0)
 					{
 						Format(buffer, sizeof(buffer), "%s won the race in %s!", clientName, timeString);
@@ -3260,20 +3261,20 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 						Format(buffer, sizeof(buffer), "%s finished the race in %s[-%s]!", clientName, timeString, diffFormatted);
 						EmitSoundToRace(client, "misc/freeze_cam.wav");
 					}
-					
+
 					if(RoundToZero(g_bRaceFirstTime[g_bRace[client]]) == 0)
 					{
 						g_bRaceFirstTime[g_bRace[client]] = time;
 					}
-					
+
 					PrintToRace(g_bRace[client], buffer);
-					
+
 					if (GetPlayersStillRacing(g_bRace[client]) == 0)
 					{
 						PrintToRace(g_bRace[client], "Everyone has finished the race.");
 						PrintToRace(g_bRace[client], "\x01Type \x03!r_list\x01 to see all times.");
 						g_bRaceStatus[g_bRace[client]] = 5;
-						
+
 					}
 				}
 
@@ -3306,27 +3307,27 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 						//PrintToChat(client, "\x01[\x03JA\x01] %t", "Goto_Avail");
 					}
 				}
-				
-				
+
+
 			}
 			//SaveCapData(client);
 		}
-		
+
 		g_bCPTouched[client][area] = true; g_iCPsTouched[client]++; IntToString(area, s_area, sizeof(s_area));
 		if (g_sCaps[client] != -1) { Format(g_sCaps[client], sizeof(g_sCaps), "%s%s", g_sCaps[client], s_area); } else { Format(g_sCaps[client], sizeof(g_sCaps), "%s", s_area); }
-		
-		
-		
-		
-		
+
+
+
+
+
 	}
 }
 public Action:eventPlayerChangeClass(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	
+
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	
+
 	if(IsClientRacing(client) && !IsPlayerFinishedRacing(client) && HasRaceStarted(client)){
 		if(g_bRaceClassForce[g_bRace[client]]){
 			new TFClassType:oldclass = TF2_GetPlayerClass(client);
@@ -3337,14 +3338,14 @@ public Action:eventPlayerChangeClass(Handle:event, const String:name[], bool:don
 	}
 
 
-	
+
 	decl String:g_sClass[MAX_NAME_LENGTH], String:steamid[32];
-	
+
 	EraseLocs(client);
 	TF2_RespawnPlayer(client);
-	
+
 	g_bUnkillable[client] = false;
-	
+
 	GetClientAuthId(client,AuthId_Steam2, steamid, sizeof(steamid));
 
 	new class = int:TF2_GetPlayerClass(client);
@@ -3423,7 +3424,7 @@ public Action:eventPlayerHurt(Handle:event, const String:name[], bool:dontBroadc
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	
+
 	if (g_bHPRegen[client])
 	{
 		CreateTimer(0.1, timerRegen, client);
@@ -3439,7 +3440,7 @@ public Action:eventPlayerSpawn(Handle:event, const String:name[], bool:dontBroad
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	
+
 	// Check if they have the jumper equipped, and hardcore is on for some reason.
 	if (IsUsingJumper(client) && g_bHardcore[client])
 	{
@@ -3448,9 +3449,9 @@ public Action:eventPlayerSpawn(Handle:event, const String:name[], bool:dontBroad
 
 	// Disable func_regenerate if player is using beggers bazooka
 	CheckBeggers(client);
-	
+
 	if (g_bUsedReset[client])
-	{	
+	{
 		if(databaseConfigured)
 		{
 			ReloadPlayerData(client);

@@ -25,6 +25,12 @@ new numZones = 0;
 
 new Handle:hSpeedrunEnabled;
 
+enum {
+	LISTING_RANKED,
+	LISTING_GENERAL,
+	LISTING_PLAYER,
+}
+
 
 public processSpeedrun(client){
 	new String:query[1024] = "", String:steamid[32], String:endtime[4];
@@ -108,7 +114,6 @@ public SQL_OnSpeedrunCheckLoad(Handle:owner, Handle:hndl, const String:error[], 
 	}
 }
 
-
 public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any:data){
 	new client = data;
 	if (hndl == INVALID_HANDLE)
@@ -123,13 +128,13 @@ public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any
 		if(time < recordTime[processingClass[client]]){
 			new Float:previousRecord = recordTime[processingClass[client]];
 			recordTime[processingClass[client]] = time;
-			
+
 			if(previousRecord == 99999999.99){
 				Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01 set the map record as \x05%s\x01 with time \x04%s\x01!", clientName, GetClassname(processingClass[client]), TimeFormat(time));
 			}else{
 				Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01 broke the map record as \x05%s\x01 by \x04%s\x01 with time \x04%s\x01!", clientName, GetClassname(processingClass[client]), TimeFormat(previousRecord-time), TimeFormat(time));
 			}
-			
+
 		}else{
 			Format(message, sizeof(message), "\x01[\x03JA\x01] \x03%s\x01: \x05%s\x01 map run: \x04%s\x01", clientName, GetClassname(processingClass[client]), TimeFormat(time));
 		}
@@ -137,104 +142,7 @@ public SQL_OnSpeedrunSubmit(Handle:owner, Handle:hndl, const String:error[], any
 	}
 }
 
-public SpeedrunOnGameFrame(){
-	for(new i = 0; i < 32; i++){
-		if(speedrunStatus[i]==1){
-			for(new j = 0; j < numZones; j++){
-				if(IsInZone(i, j) && zoneTimes[i][j] == 0.0 && j != 0 && j==nextCheckpoint[i]) {
-					zoneTimes[i][j] = GetEngineTime();
-					if(j != numZones-1){
-						new String:timeString[128];
-						timeString = TimeFormat(zoneTimes[i][j] - zoneTimes[i][0]);
-						PrintToChat(i, "\x01[\x03JA\x01] \x01\x04Checkpoint %d\x01: %s", j, timeString);
-						nextCheckpoint[i]++;
-					}else{
-						new String:timeString[128];
-						timeString = TimeFormat(zoneTimes[i][j] - zoneTimes[i][0]);
-						PrintToChat(i, "\x01[\x03JA\x01] Finished in %s", timeString);
-						speedrunStatus[i] = 2;
 
-						processingClass[i] = int:TF2_GetPlayerClass(i);
-						processingZoneTimes[i] = zoneTimes[i];
-
-
-						processSpeedrun(i);
-					}
-					skippedCheckpointMessage[i] = false;
-				}else if(!skippedCheckpointMessage[i] && j > nextCheckpoint[i] && IsInZone(i, j)){
-					PrintToChat(i, "\x01[\x03JA\x01] You skipped \x01\x04Checkpoint %d\x01!", nextCheckpoint[i]);
-					skippedCheckpointMessage[i] = true;
-				}
-				if(!IsInZone(i, 0) && lastFrameInStartZone[i]){
-					for(new h = 0; h < 32; h++){
-						zoneTimes[i][h] = 0.0;
-					}
-					PrintToChat(i, "\x01[\x03JA\x01] Speedrun started");
-					nextCheckpoint[i] = 1;
-					skippedCheckpointMessage[i] = false;
-					zoneTimes[i][j] = GetEngineTime();
-				}			
-				if(IsInZone(i, 0)){
-					lastFrameInStartZone[i] = true;
-				}else{
-					lastFrameInStartZone[i] = false;
-				}
-
-			
-			}
-		}else if(speedrunStatus[i]==2){
-			if(IsInZone(i, 0)){
-				speedrunStatus[i] = 1;
-				PrintToChat(i, "\x01[\x03JA\x01] Entered start zone");
-			}
-
-		}
-	}
-}
-
-public UpdateSteamID(client){
-	new String:query[1024] = "", String:steamid[32];
-	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-
-	Format(query, sizeof(query), "SELECT * FROM steamids WHERE SteamID='%s'", steamid);
-	SQL_TQuery(g_hDatabase, SQL_OnSteamIDCheck, query, client);
-}
-
-public SQL_OnSteamIDCheck(Handle:owner, Handle:hndl, const String:error[], any:data){
-	new client = data;
-	new String:query[1024];
-
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError("OnSpeedrunSubmit() - Query failed! %s", error);
-	}
-	else if (SQL_GetRowCount(hndl))
-	{
-		new String:name[64], String:steamid[32];
-		GetClientName(client, name, sizeof(name));
-		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-
-		Format(query, sizeof(query), "UPDATE steamids SET name='%s' WHERE SteamID='%s'", name, steamid);
-		SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
-
-	}
-	else
-	{
-		new String:name[64], String:steamid[32];
-		GetClientName(client, name, sizeof(name));
-		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-
-		Format(query, sizeof(query), "INSERT INTO steamids VALUES(null,'%s', '%s');", steamid, name);
-		SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
-	}
-}
-
-public SQL_OnSteamIDUpdate(Handle:owner, Handle:hndl, const String:error[], any:data){
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError("OnSteamIDUpdate() - Query failed! %s", error);
-	}
-}
 
 public Action:cmdShowPR(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -253,9 +161,9 @@ public Action:cmdShowPR(client,args){
 	if(!IsSpeedrunMap()){
 		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
 		return Plugin_Handled;
-	}	
+	}
 	new String:query[1024] = "", String:steamid[32], String:endtime[4], class;
-	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));	
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
 	if(IsClientObserver(client)){
 		class = 3;
 	}else{
@@ -311,31 +219,138 @@ public SQL_OnSpeedrunListingSubmit(Handle:owner, Handle:hndl, const String:error
 	}
 }
 
+public Action:cmdShowPlayerInfo(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+	if(!IsSpeedrunMap()){
+		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
+		return Plugin_Handled;
+	}
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot use this command from rcon");
+		return Plugin_Handled;
+	}
+	new String:query[1024] = "";
+	new Handle:data = CreateArray(64);
+	new String:steamid[32];
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+
+	if(args == 0 || 1){
+
+
+		Format(query, sizeof(query), "SELECT * FROM times WHERE SteamID='%s' LIMIT 50", steamid);
+
+
+		PushArrayCell(data, client);
+		PushArrayCell(data, LISTING_PLAYER);
+		PushArrayString(data, cMap);
+		PushArrayCell(data, 0);
+
+
+	}else{
+		//TAKE THE || 1 OUT OF THE IF STATEMENT WHEN YOU IMPLIMENT THIS
+	}
+	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunMultiListingSubmit, query, data);
+	return Plugin_Continue;
+}
+
+public Action:cmdShowTop(client,args){
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+	if(!IsSpeedrunMap()){
+		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
+		return Plugin_Handled;
+	}
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot use this command from rcon");
+		return Plugin_Handled;
+	}
+	new String:query[1024] = "", String:endtime[4], class;
+	new Handle:data = CreateArray(64);
+
+	if(args == 0 || 1){
+		if(IsClientObserver(client)){
+			class = 3;
+		}else{
+			class = int:TF2_GetPlayerClass(client);
+		}
+
+
+		Format(endtime, sizeof(endtime), "c%d", numZones-1);
+		Format(query, sizeof(query), "SELECT * FROM times WHERE class='%d' AND MapName='%s' ORDER BY %s ASC LIMIT 50", class, cMap, endtime);
+
+
+		PushArrayCell(data, client);
+		PushArrayCell(data, LISTING_RANKED);
+		PushArrayString(data, cMap);
+		PushArrayCell(data, class);
+
+
+	}else{
+		//TAKE THE || 1 OUT OF THE IF STATEMENT WHEN YOU IMPLIMENT THIS
+	}
+	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunMultiListingSubmit, query, data);
+	return Plugin_Continue;
+}
+
+
+
 public SQL_OnSpeedrunMultiListingSubmit(Handle:owner, Handle:hndl, const String:error[], any:data){
-	new client = data;
+	//Data should be an array of [client, Listing type from enum, map, class]
+
+	new client = GetArrayCell(data, 0);
+	new multiType = GetArrayCell(data, 1);
+	new String:map[64];
+	GetArrayString(data, 2, map, sizeof(map));
+	new class = GetArrayCell(data, 3);
+
 	if (hndl == INVALID_HANDLE)
 	{
-		LogError("OnSpeedrunListingSubmit() - Query failed! %s", error);
+		LogError("OnSpeedrunMultiListingSubmit() - Query failed! %s", error);
 	}
 	else if(SQL_GetRowCount(hndl))
-	{	
+	{
 		new Handle:menu;
-		menu = BuildMultiListingMenu(hndl);
+		menu = BuildMultiListingMenu(hndl, multiType, class, map);
 		DisplayMenu(menu, client, MENU_TIME_FOREVER);
 
-
-		
 	}else{
 		PrintToChat(client, "\x01[\x03JA\x01] No records exists");
 	}
+	CloseHandle(data);
 }
 
-Handle:BuildMultiListingMenu(Handle:hndl){
-	new String:mapName[32], String:steamid[32], String:class[128], Float:time, String:timeString[128], String:query[1024];
+Float:GetFinishTime(Handle:hndl){
+	for(new i = 7; i < 38; i++){
+		if(SQL_FetchFloat(hndl, i) == 0.0){
+			return(SQL_FetchFloat(hndl, i-1));
+		}
+	}
+	return 0.0;
+}
+
+Handle:BuildMultiListingMenu(Handle:hndl, type, class, String:map[]){
+	new String:mapName[32], String:steamid[32], Float:time, String:timeString[128], String:query[1024];
 	new String:playerName[64], String:toPrint[128];
 	new Handle:hQuery;
 	new String:err[256];
+	new String:classString[128];
 	new id, String:idString[16];
+	new listingClass;
 
 	new Handle:m;
 	m = CreateMenu(Menu_MultiListing);
@@ -344,12 +359,15 @@ Handle:BuildMultiListingMenu(Handle:hndl){
 	for(new i = 0; i < SQL_GetRowCount(hndl); i++){
 		SQL_FetchRow(hndl);
 
-		SQL_FetchString(hndl, 0, mapName, sizeof(mapName));
+		SQL_FetchString(hndl, 3, mapName, sizeof(mapName));
 		SQL_FetchString(hndl, 1, steamid, sizeof(steamid));
-		time = SQL_FetchFloat(hndl, 2);
+
+		time = GetFinishTime(hndl);
+
 		timeString = TimeFormat(time);
-		class = GetClassname(SQL_FetchInt(hndl, 3));
-		id = SQL_FetchInt(hndl, 4);
+		id = SQL_FetchInt(hndl, 0);
+		listingClass = SQL_FetchInt(hndl, 2);
+		classString = GetClassname(listingClass);
 		Format(idString, sizeof(idString), "%d", id);
 		Format(query, sizeof(query), "SELECT name FROM steamids WHERE SteamID='%s'", steamid);
 
@@ -360,25 +378,43 @@ Handle:BuildMultiListingMenu(Handle:hndl){
 		}else{
 			SQL_FetchRow(hQuery);
 			SQL_FetchString(hQuery, 0, playerName, sizeof(playerName));
-			Format(toPrint, sizeof(toPrint), "( %d ) %s [%s-%s]: %s", i+1, timeString, mapName, class, playerName);
+			if(type == LISTING_RANKED){
+				Format(toPrint, sizeof(toPrint), "( %d ) %s: %s", i+1, timeString, playerName);
+			}else if(type == LISTING_GENERAL){
+				Format(toPrint, sizeof(toPrint), "%s: %s", timeString, mapName, playerName);
+			}else if(type == LISTING_PLAYER){
+				Format(toPrint, sizeof(toPrint), "%s - [%s - %s]", timeString, mapName,  classString);
+			}
 		}
 		SQL_UnlockDatabase(g_hDatabase);
 
 		AddMenuItem(m, idString, toPrint);
 	}
 	CloseHandle(hQuery);
+	new String:title[256];
+	if(type == LISTING_RANKED){
+		classString = GetClassname(class);
+
+		Format(title, sizeof(title), "%s - %s", map, classString);
+	}else if(type == LISTING_GENERAL){
+
+	}else if(type == LISTING_PLAYER){
+		Format(title, sizeof(title), "%s", playerName);
+	}
+
+	SetMenuTitle(m, title);
 	return m;
 }
 
 public Menu_MultiListing(Handle:menu, MenuAction:action, param1, param2){
-if (action == MenuAction_Select)
+	if (action == MenuAction_Select)
 	{
 		new String:info[32];
 
 		GetMenuItem(menu, param2, info, sizeof(info));
 
 		PrintToChat(param1, "You selected run ID #%s",info);
- 
+
 	}
 }
 
@@ -417,43 +453,6 @@ public Action:cmdShowWR(client,args){
 	return Plugin_Continue;
 }
 
-public Action:cmdShowTop(client,args){
-	if(!GetConVarBool(hSpeedrunEnabled)){
-		return Plugin_Continue;
-	}
-
-	if(!databaseConfigured)
-	{
-		PrintToChat(client, "This feature is not supported without a database configuration");
-		return Plugin_Handled;
-	}
-	if(!IsSpeedrunMap()){
-		ReplyToCommand(client, "\x01[\x03JA\x01] This map does not currently have speedrunning configured");
-		return Plugin_Handled;
-	}
-	if( !client ){
-		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot use this command from rcon");
-		return Plugin_Handled;
-	}
-	new String:query[1024] = "", String:endtime[4], class;
-
-	if(args == 0 || 1){
-		if(IsClientObserver(client)){
-			class = 3;
-		}else{
-			class = int:TF2_GetPlayerClass(client);
-		}
-
-
-		Format(endtime, sizeof(endtime), "c%d", numZones-1);
-
-		Format(query, sizeof(query), "SELECT MapName, SteamID, %s, class, ID FROM times WHERE class='%d' AND MapName='%s' ORDER BY %s ASC LIMIT 50", endtime, class, cMap, endtime);
-	}else{
-		//TAKE THE || 1 OUT OF THE IF STATEMENT WHEN YOU IMPLIMENT THIS
-	}
-	SQL_TQuery(g_hDatabase, SQL_OnSpeedrunMultiListingSubmit, query, client);
-	return Plugin_Continue;
-}
 
 
 public Action:cmdSpeedrunRestart(client,args){
@@ -536,7 +535,7 @@ public RestartSpeedrun(client){
 	ReSupply(client, g_iClientWeapons[client][2]);
 	new iMaxHealth = TF2_GetPlayerResourceData(client, TFResource_MaxHealth);
 	SetEntityHealth(client, iMaxHealth);
-	
+
 	TeleportEntity(client,startLoc,startAng,v);
 }
 
@@ -555,7 +554,6 @@ public Action:cmdSpeedrunForceReload(client,args){
 
 	return Plugin_Continue;
 }
-
 
 public Action:cmdRemoveTime(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -597,7 +595,6 @@ public Action:cmdRemoveTime(client,args){
 	PrintToChat(client, "\x01[\x03JA\x01] %s time cleared", classString);
 	return Plugin_Continue;
 }
-
 
 public Action:cmdClearTimes(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -736,7 +733,6 @@ public Action:cmdShowZones(client,args){
 
 	ReplyToCommand(client, "\x01[\x03JA\x01] Showing all zones");
 	return Plugin_Continue;
-
 }
 
 public Action:cmdShowZone(client,args){
@@ -778,10 +774,62 @@ public Action:cmdShowZone(client,args){
 	}
 
 	return Plugin_Continue;
-
 }
 
+public SpeedrunOnGameFrame(){
+	for(new i = 0; i < 32; i++){
+		if(speedrunStatus[i]==1){
+			for(new j = 0; j < numZones; j++){
+				if(IsInZone(i, j) && zoneTimes[i][j] == 0.0 && j != 0 && j==nextCheckpoint[i]) {
+					zoneTimes[i][j] = GetEngineTime();
+					if(j != numZones-1){
+						new String:timeString[128];
+						timeString = TimeFormat(zoneTimes[i][j] - zoneTimes[i][0]);
+						PrintToChat(i, "\x01[\x03JA\x01] \x01\x04Checkpoint %d\x01: %s", j, timeString);
+						nextCheckpoint[i]++;
+					}else{
+						new String:timeString[128];
+						timeString = TimeFormat(zoneTimes[i][j] - zoneTimes[i][0]);
+						PrintToChat(i, "\x01[\x03JA\x01] Finished in %s", timeString);
+						speedrunStatus[i] = 2;
 
+						processingClass[i] = int:TF2_GetPlayerClass(i);
+						processingZoneTimes[i] = zoneTimes[i];
+
+
+						processSpeedrun(i);
+					}
+					skippedCheckpointMessage[i] = false;
+				}else if(!skippedCheckpointMessage[i] && j > nextCheckpoint[i] && IsInZone(i, j)){
+					PrintToChat(i, "\x01[\x03JA\x01] You skipped \x01\x04Checkpoint %d\x01!", nextCheckpoint[i]);
+					skippedCheckpointMessage[i] = true;
+				}
+				if(!IsInZone(i, 0) && lastFrameInStartZone[i]){
+					for(new h = 0; h < 32; h++){
+						zoneTimes[i][h] = 0.0;
+					}
+					PrintToChat(i, "\x01[\x03JA\x01] Speedrun started");
+					nextCheckpoint[i] = 1;
+					skippedCheckpointMessage[i] = false;
+					zoneTimes[i][j] = GetEngineTime();
+				}
+				if(IsInZone(i, 0)){
+					lastFrameInStartZone[i] = true;
+				}else{
+					lastFrameInStartZone[i] = false;
+				}
+
+
+			}
+		}else if(speedrunStatus[i]==2){
+			if(IsInZone(i, 0)){
+				speedrunStatus[i] = 1;
+				PrintToChat(i, "\x01[\x03JA\x01] Entered start zone");
+			}
+
+		}
+	}
+}
 
 public Action:ClearMapSpeedrunInfo(){
 	for(new i = 0; i < 32; i++){
@@ -824,9 +872,7 @@ public Action:LoadMapSpeedrunInfo(){
 	SQL_TQuery(g_hDatabase, SQL_OnMapStartLocationLoad, query, 0);
 
 	Format(query, sizeof(query), "SELECT x1, y1, z1, x2, y2, z2 FROM zones WHERE MapName='%s' ORDER BY 'number' ASC", cMap);
-	SQL_TQuery(g_hDatabase, SQL_OnMapZonesLoad, query, 0);	
-
-
+	SQL_TQuery(g_hDatabase, SQL_OnMapZonesLoad, query, 0);
 }
 
 public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
@@ -854,13 +900,14 @@ public SQL_OnMapZonesLoad(Handle:owner, Handle:hndl, const String:error[], any:d
 			Format(query, sizeof(query), "SELECT c%d FROM times WHERE MapName='%s' AND class='%d' ORDER BY c%d ASC LIMIT 1", numZones-1, cMap, i, numZones-1);
 			SQL_TQuery(g_hDatabase, SQL_OnRecordLoad, query, i);
 		}
-		
+
 	}
 	else
 	{
 
 	}
 }
+
 public SQL_OnRecordLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
 	new class = data;
 
@@ -880,9 +927,7 @@ public SQL_OnRecordLoad(Handle:owner, Handle:hndl, const String:error[], any:dat
 	{
 
 	}
-
 }
-
 
 public SQL_OnMapStartLocationLoad(Handle:owner, Handle:hndl, const String:error[], any:data){
 
@@ -907,7 +952,6 @@ public SQL_OnMapStartLocationLoad(Handle:owner, Handle:hndl, const String:error[
 
 	}
 }
-
 
 public Action:cmdAddZone(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
@@ -988,10 +1032,7 @@ public Action:cmdAddZone(client,args){
 
 	ReplyToCommand(client, "\x01[\x03JA\x01] Corner successfully selected");
 	return Plugin_Continue;
-
 }
-
-
 
 public SQL_OnZoneAdded(Handle:owner, Handle:hndl, const String:error[], any:data){
 
@@ -1135,7 +1176,49 @@ public SQL_OnStartLocationSet(Handle:owner, Handle:hndl, const String:error[], a
 // 	return m;
 // }
 
+public UpdateSteamID(client){
+	new String:query[1024] = "", String:steamid[32];
+	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
 
+	Format(query, sizeof(query), "SELECT * FROM steamids WHERE SteamID='%s'", steamid);
+	SQL_TQuery(g_hDatabase, SQL_OnSteamIDCheck, query, client);
+}
+
+public SQL_OnSteamIDCheck(Handle:owner, Handle:hndl, const String:error[], any:data){
+	new client = data;
+	new String:query[1024];
+
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnSpeedrunSubmit() - Query failed! %s", error);
+	}
+	else if (SQL_GetRowCount(hndl))
+	{
+		new String:name[64], String:steamid[32];
+		GetClientName(client, name, sizeof(name));
+		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+
+		Format(query, sizeof(query), "UPDATE steamids SET name='%s' WHERE SteamID='%s'", name, steamid);
+		SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
+
+	}
+	else
+	{
+		new String:name[64], String:steamid[32];
+		GetClientName(client, name, sizeof(name));
+		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+
+		Format(query, sizeof(query), "INSERT INTO steamids VALUES(null,'%s', '%s');", steamid, name);
+		SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
+	}
+}
+
+public SQL_OnSteamIDUpdate(Handle:owner, Handle:hndl, const String:error[], any:data){
+	if (hndl == INVALID_HANDLE)
+	{
+		LogError("OnSteamIDUpdate() - Query failed! %s", error);
+	}
+}
 
 bool:IsSpeedrunMap(){
 	if(zoneBottom[0][0] != 0.0 && zoneBottom[1][0] != 0.0 && startLoc[0] != 0.0){
