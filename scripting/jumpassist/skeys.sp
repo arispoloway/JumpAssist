@@ -51,13 +51,13 @@ public SkeysOnGameFrame()
 	for (new i=1;i<MaxClients;i++)
 	{
 
-		if (g_bGetClientKeys[i])
+		if (g_bGetClientKeys[i] && IsClientInGame(i))
 		{
 			ClearSyncHud(i, HudDisplayForward);
 			ClearSyncHud(i, HudDisplayASD);
 			ClearSyncHud(i, HudDisplayDuck);
 			ClearSyncHud(i, HudDisplayJump);
-			
+
 			if (g_iButtons[i] & IN_SCORE) { return; }
 			iObserverMode = GetEntPropEnt(i, Prop_Send, "m_iObserverMode");
 			if (IsClientObserver(i)) { iClientToShow = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget"); } else { iClientToShow = i; }
@@ -71,12 +71,12 @@ public SkeysOnGameFrame()
 				SetHudTextParams(g_iSkeysXLoc[i]+0.06, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayForward, "-");
 			}
-			
+
 
 			if (g_iButtons[iClientToShow] & IN_BACK || g_iButtons[iClientToShow] & IN_MOVELEFT || g_iButtons[iClientToShow] & IN_MOVERIGHT)
 			{
 				decl String:g_sButtons[64];
-				
+
 				if (g_iButtons[iClientToShow] & IN_BACK)
 				{
 					Format(wasBack[iClientToShow], sizeof(wasBack), "S");
@@ -112,25 +112,25 @@ public SkeysOnGameFrame()
 			{
 				SetHudTextParams(g_iSkeysXLoc[i] + 0.1, g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "Jump");
-				
+
 			}
 			if (g_iButtons[iClientToShow] & IN_ATTACK)
 			{
 				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "M1");
-				
+
 			}
 			if (g_iButtons[iClientToShow] & IN_ATTACK2)
 			{
 				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
 				ShowSyncHudText(i, HudDisplayJump, "M2");
-				
+
 			}
 			//.54 x def and .4 y def
 		}
 	}
-	
-	
+
+
 }
 
 
@@ -157,7 +157,7 @@ public Action:cmdGetClientKeys(client, args)
 }
 public Action:cmdChangeSkeysColor(client, args)
 {
-	
+
 	decl String:red[4], String:blue[4], String:green[4], String:query[512], String:steamid[32];
 	if (args < 1)
 	{
@@ -174,13 +174,13 @@ public Action:cmdChangeSkeysColor(client, args)
 	}
 
 	g_iSkeysRed[client] = StringToInt(red); g_iSkeysBlue[client] = StringToInt(blue); g_iSkeysGreen[client] = StringToInt(green);
-	
+
 	//if(!databaseConfigured)
 	//{
 	//	PrintToChat(client, "No database configured - cannot save key colors");
 	//	return Plugin_Handled;
 	//}
-	
+
 	//This will throw a server error but its no big deal
 	Format(query, sizeof(query), "UPDATE `player_profiles` SET SKEYS_RED_COLOR=%i, SKEYS_GREEN_COLOR=%i, SKEYS_BLUE_COLOR=%i WHERE steamid = '%s'", g_iSkeysRed[client], g_iSkeysGreen[client], g_iSkeysBlue[client], steamid);
 	JA_SendQuery(query, client);
