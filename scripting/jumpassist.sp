@@ -229,9 +229,9 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.5"
+#define PLUGIN_VERSION "0.8.6"
 #define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush - Updated by talkingmelon, happs"
+#define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
 #define cDefault    0x01
 #define cLightGreen 0x03
@@ -370,6 +370,8 @@ public OnPluginStart()
 	RegAdminCmd("sm_send", cmdSendPlayer, ADMFLAG_GENERIC, "Send target to another target.");
 	RegAdminCmd("sm_jatele", SendToLocation, ADMFLAG_GENERIC, "Sends a player to the spcified jump.");
 	RegAdminCmd("sm_addtele", cmdAddTele, ADMFLAG_GENERIC, "Adds a teleport location for the current map");
+	//RegAdminCmd("sm_removetele", cmdRemoveTele, ADMFLAG_GENERIC, "Removes a teleport location for the current map");
+
 
 	RegAdminCmd("sm_setstart", cmdSetStart, ADMFLAG_GENERIC, "Sets the map start location for speedrunning");
 	RegAdminCmd("sm_addzone", cmdAddZone, ADMFLAG_GENERIC, "Adds a checkpoint or end zone for speedrunning");
@@ -2716,7 +2718,7 @@ stock ReSupply(client, iWeapon)
 	switch(GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex"))
 	{
 		// Rocket Launchers
-		case 18,205,127,513,800,809,658:
+		case 18,205,127,513,800,809,15006,15014,15028,15043,15052,15057,658,889,898,907,916,965,974:
 		{
 			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
 			SetAmmo(client, iWeapon, 20);
@@ -2747,7 +2749,7 @@ stock ReSupply(client, iWeapon)
 		*/
 
 		// Stickybomb Launchers
-		case 20, 207:
+		case 20, 207, 661, 806, 895,904,913,962,971,15009,15012,15024,15038,15045,15048:
 		{
 			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
 			SetAmmo(client, iWeapon, 24);
