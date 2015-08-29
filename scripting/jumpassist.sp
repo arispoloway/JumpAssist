@@ -229,7 +229,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.6"
+#define PLUGIN_VERSION "0.8.7"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
@@ -384,6 +384,7 @@ public OnPluginStart()
 	RegConsoleCmd("sm_sz", cmdShowZone, "Shows the current zone and says what zone it is");
 	RegConsoleCmd("sm_speedrun", cmdToggleSpeedrun, "Enables/disables speedrunning");
 	RegConsoleCmd("sm_sr", cmdToggleSpeedrun, "Enables/disables speedrunning");
+	RegConsoleCmd("sm_stopspeedrun", cmdDisableSpeedrun, "Disables speedrunning");
 	RegConsoleCmd("sm_pr", cmdShowPR, "Shows your personal record");
 	RegConsoleCmd("sm_wr", cmdShowWR, "Shows the map record");
 	RegConsoleCmd("sm_top", cmdShowTop, "Shows the map record");

@@ -519,6 +519,37 @@ public Action:cmdSpeedrunRestart(client,args){
 	return Plugin_Continue;
 }
 
+public Action:cmdDisableSpeedrun(client, args){
+	
+	if(!GetConVarBool(hSpeedrunEnabled)){
+		return Plugin_Continue;
+	}
+
+	if(!databaseConfigured)
+	{
+		PrintToChat(client, "This feature is not supported without a database configuration");
+		return Plugin_Handled;
+	}
+
+	if( !client ){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot speedrun from rcon");
+		return Plugin_Handled;
+	}
+	if(IsClientObserver(client)){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot speedrun as spectator");
+		return Plugin_Handled;
+	}
+
+
+	if(speedrunStatus[client]){
+		ReplyToCommand(client, "\x01[\x03JA\x01] Speedrunning disabled");
+		speedrunStatus[client] = 0;
+	}
+
+	return Plugin_Continue;
+
+}
+
 public Action:cmdToggleSpeedrun(client,args){
 	if(!GetConVarBool(hSpeedrunEnabled)){
 		return Plugin_Continue;
