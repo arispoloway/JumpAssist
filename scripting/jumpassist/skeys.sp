@@ -60,6 +60,8 @@ public SkeysOnGameFrame()
 			ClearSyncHud(i, HudDisplayASD);
 			ClearSyncHud(i, HudDisplayDuck);
 			ClearSyncHud(i, HudDisplayJump);
+			ClearSyncHud(i, HudDisplayM1);
+			ClearSyncHud(i, HudDisplayM2);
 
 			if (g_iButtons[i] & IN_SCORE) { return; }
 			iObserverMode = GetEntPropEnt(i, Prop_Send, "m_iObserverMode");
