@@ -3,6 +3,9 @@ new Handle:HudDisplayForward;
 new Handle:HudDisplayASD;
 new Handle:HudDisplayDuck;
 new Handle:HudDisplayJump;
+new Handle:HudDisplayM1;
+new Handle:HudDisplayM2;
+
 
 new bool:g_bGetClientKeys[MAXPLAYERS+1];
 
@@ -117,13 +120,13 @@ public SkeysOnGameFrame()
 			if (g_iButtons[iClientToShow] & IN_ATTACK)
 			{
 				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i], 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, HudDisplayJump, "M1");
+				ShowSyncHudText(i, HudDisplayM1, "M1");
 
 			}
 			if (g_iButtons[iClientToShow] & IN_ATTACK2)
 			{
 				SetHudTextParams(g_iSkeysXLoc[i], g_iSkeysYLoc[i]+0.05, 0.3, g_iSkeysRed[i], g_iSkeysGreen[i], g_iSkeysBlue[i], 255, 0, 0.0, 0.0, 0.0);
-				ShowSyncHudText(i, HudDisplayJump, "M2");
+				ShowSyncHudText(i, HudDisplayM2, "M2");
 
 			}
 			//.54 x def and .4 y def

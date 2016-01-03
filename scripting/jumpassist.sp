@@ -229,7 +229,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.7"
+#define PLUGIN_VERSION "0.8.8"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
@@ -435,6 +435,8 @@ public OnPluginStart()
 	HudDisplayASD = CreateHudSynchronizer();
 	HudDisplayDuck = CreateHudSynchronizer();
 	HudDisplayJump = CreateHudSynchronizer();
+	HudDisplayM1 = CreateHudSynchronizer();
+	HudDisplayM2 = CreateHudSynchronizer();
 
 	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
 
@@ -568,13 +570,101 @@ public Updater_OnPluginUpdated()
 	LogMessage("Update complete.");
 	ReloadPlugin();
 }
+/*
+SentryOnGameFrame(){
+
+	new i = -1;
+	while ((i = FindEntityByClassname(i, "obj_sentrygun")) != -1)
+	{
+		new level = GetEntProp(i, Prop_Send, "m_iUpgradeLevel");
+		new metal = GetEntProp(i, Prop_Send, "m_iUpgradeMetal");
+		if(level < 3 && metal > 0){
+			new iLevel = level + 1;
+			new iSentry = i;
+
+			    new Float:fBuildMaxs[3];
+		    fBuildMaxs[0] = 24.0;
+		    fBuildMaxs[1] = 24.0;
+		    fBuildMaxs[2] = 66.0;
+
+		    new Float:fMdlWidth[3];
+		    fMdlWidth[0] = 1.0;
+		    fMdlWidth[1] = 0.5;
+		    fMdlWidth[2] = 0.0;
+		    
+		    decl String:sModel[64];
+		  
+		    
+		    new iShells, iHealth, iRockets;
+		    
+		    if(iLevel == 1)
+		    {
+		        sModel = "models/buildables/sentry1.mdl";
+		        iShells = 100;
+		        iHealth = 150;
+		    }
+		    else if(iLevel == 2)
+		    {
+		        sModel = "models/buildables/sentry2.mdl";
+		        iShells = 120;
+		        iHealth = 180;
+		    }
+		    else if(iLevel == 3)
+		    {
+		        sModel = "models/buildables/sentry3.mdl";
+		        iShells = 144;
+		        iHealth = 216;
+		        iRockets = 20;
+		    }
+		    
+		    
+		
+		    
+		    SetEntityModel(iSentry,sModel);
+		    
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_flAnimTime"),                 51, 4 , true);
+		   // SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_nNewSequenceParity"),         4, 4 , true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_nResetEventsParity"),         4, 4 , true);
+		    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iAmmoShells") ,                 iShells, 4, true);
+		    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iMaxHealth"),                 iHealth, 4, true);
+		    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iHealth"),                     iHealth, 4, true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bBuilding"),                 0, 2, true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bPlacing"),                     0, 2, true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bDisabled"),                 0, 2, true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iObjectType"),                 3, true);
+		   // SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iState"),                     1, true);
+		    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iUpgradeMetal"),             0, true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bHasSapper"),                 0, 2, true);
+		    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bServerOverridePlacement"),     1, 1, true);
+		    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iUpgradeLevel"),             iLevel, 4, true);
+		    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iAmmoRockets"),                 iRockets, 4, true);
+		    
+		    //SetEntDataEnt2(iSentry, FindSendPropOffs("CObjectSentrygun","m_nSequence"), 0, true);
+
+		    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flCycle"),                     0.0, true);
+		    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flPlaybackRate"),             1.0, true);
+		    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flPercentageConstructed"),     0.9, true);
+			SetEntProp(iSentry, Prop_Send, "m_iHighestUpgradeLevel", iLevel);
+			SetEntProp(iSentry, Prop_Send, "m_bBuilding", 1);
+		    SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_vecBuildMaxs"),         fBuildMaxs, true);
+		    SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),     fMdlWidth, true);
+		}
+		PrintToChatAll("%d", level);
+	}
+
+
+}
 
 
 
+*/
 public OnGameFrame(){
 	SkeysOnGameFrame();
 	if(GetConVarBool(hSpeedrunEnabled)){
 		SpeedrunOnGameFrame();
+	}
+	if(GetConVarBool(g_hFastBuild)){
+		//SentryOnGameFrame();
 	}
 }
 
@@ -3157,8 +3247,8 @@ public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBr
 	{
 		if (GetConVarInt(g_hSentryLevel) == 3)
 		{
-			SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeLevel"), 3, 4);
-			SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeMetal"), 200);
+			//SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeLevel"), 3, 4);
+			//SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeMetal"), 200);
 		}
 	}
 	if (!g_bHardcore[client])
