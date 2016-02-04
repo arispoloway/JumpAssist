@@ -600,7 +600,7 @@ ReloadPlayerData(client)
 	if(IsFakeClient(client)){return; }
 	decl String:sQuery[1024], String:sSteamID[64], String:pMap[32];
 
-	Steam_GetCSteamIDForClient(client, sSteamID, sizeof(sSteamID));
+	GetClientAuthString(client, sSteamID, sizeof(sSteamID));
 	GetCurrentMap(pMap, sizeof(pMap));
 
 	new sTeam = GetClientTeam(client);

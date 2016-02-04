@@ -214,8 +214,6 @@
 #define AUTOLOAD_EXTENSIONS
 #endif
 
-#include <steamtools>
-
 #undef REQUIRE_PLUGIN
 #include <updater>
 #define REQUIRE_PLUGIN
@@ -229,7 +227,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.9"
+#define PLUGIN_VERSION "0.8.10"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
@@ -477,7 +475,6 @@ public OnPluginStart()
 	}
 
 	ConnectToDatabase();
-	SetDesc();
 
 }
 
@@ -722,8 +719,6 @@ public OnMapStart()
 			ResetRace(i);
 		}
 
-
-		SetDesc();
 		if (g_hDatabase != INVALID_HANDLE)
 		{
 			LoadMapCFG();
@@ -2638,12 +2633,7 @@ Hardcore(client)
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_Off");
 	}
 }
-SetDesc()
-{
-	decl String:desc[128];
-	Format(desc, sizeof(desc), "Jump Assist (%s)", PLUGIN_VERSION);
-	Steam_SetGameDescription(desc);
-}
+
 SetRegen(client, String:RegenType[], String:RegenToggle[])
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
