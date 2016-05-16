@@ -440,6 +440,7 @@ public SQL_OnLoadPlayerData(Handle:owner, Handle:hndl, const String:error[], any
 		if (!g_bHardcore[client] && !IsClientRacing(client) && speedrunStatus[client] == 0)
 		{
 			Teleport(client);
+			g_iLastTeleport[client] = GetEngineTime();
 		}
 	}
 }

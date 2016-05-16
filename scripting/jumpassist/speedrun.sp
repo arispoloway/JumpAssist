@@ -1,4 +1,4 @@
-#include <smlib>
+//#include <smlib>
 
 new Float:startLoc[3], Float:startAng[3], Float:sLoc[3], Float:sAng[3], Float:bottomLoc[3], Float:topLoc[3];
 
@@ -1345,4 +1345,88 @@ public bool:TraceEntityFilterPlayer(entity, contentsMask, any:data){
 
 stock ShowZone(client, zone){
 	Effect_DrawBeamBoxToClient(client, zoneBottom[zone], zoneTop[zone], g_BeamSprite, g_HaloSprite, 0, 30);
+}
+stock Effect_DrawBeamBoxToClient(
+	client,
+	const Float:bottomCorner[3],
+	const Float:upperCorner[3],
+	modelIndex,
+	haloIndex,
+	startFrame=0,
+	frameRate=30,
+	Float:life=5.0,
+	Float:width=5.0,
+	Float:endWidth=5.0,
+	fadeLength=2,
+	Float:amplitude=1.0,
+	const color[4]={ 255, 0, 0, 255 },
+	speed=0
+) {
+    new clients[1];
+    clients[0] = client;
+    Effect_DrawBeamBox(clients, 1, bottomCorner, upperCorner, modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
+}
+
+stock Effect_DrawBeamBox(
+	clients[],
+	numClients,
+	const Float:bottomCorner[3],
+	const Float:upperCorner[3],
+	modelIndex,
+	haloIndex,
+	startFrame=0,
+	frameRate=30,
+	Float:life=5.0,
+	Float:width=5.0,
+	Float:endWidth=5.0,
+	fadeLength=2,
+	Float:amplitude=1.0,
+	const color[4]={ 255, 0, 0, 255 },
+	speed=0
+) {
+	// Create the additional corners of the box
+	decl Float:corners[8][3];
+
+	for (new i=0; i < 4; i++) {
+		Array_Copy(bottomCorner,	corners[i],		3);
+		Array_Copy(upperCorner,		corners[i+4],	3);
+	}
+
+	corners[1][0] = upperCorner[0];
+	corners[2][0] = upperCorner[0]; 
+	corners[2][1] = upperCorner[1];
+	corners[3][1] = upperCorner[1];
+	corners[4][0] = bottomCorner[0]; 
+	corners[4][1] = bottomCorner[1];
+	corners[5][1] = bottomCorner[1];
+	corners[7][0] = bottomCorner[0];
+
+    // Draw all the edges
+
+	// Horizontal Lines
+	// Bottom
+	for (new i=0; i < 4; i++) {
+		new j = ( i == 3 ? 0 : i+1 );
+		TE_SetupBeamPoints(corners[i], corners[j], modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
+		TE_Send(clients, numClients);
+	}
+
+	// Top
+	for (new i=4; i < 8; i++) {
+		new j = ( i == 7 ? 4 : i+1 );
+		TE_SetupBeamPoints(corners[i], corners[j], modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
+		TE_Send(clients, numClients);
+	}
+
+	// All Vertical Lines
+	for (new i=0; i < 4; i++) {
+		TE_SetupBeamPoints(corners[i], corners[i+4], modelIndex, haloIndex, startFrame, frameRate, life, width, endWidth, fadeLength, amplitude, color, speed);
+		TE_Send(clients, numClients);
+	}
+}
+stock Array_Copy(const any:array[], any:newArray[], size)
+{
+	for (new i=0; i < size; i++) {
+		newArray[i] = array[i];
+	}
 }
