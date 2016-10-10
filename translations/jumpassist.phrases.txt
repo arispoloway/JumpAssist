@@ -1,10 +1,10 @@
-"Phrases"
+﻿"Phrases"
 {
 	"Teleport_NoSave"
 	{
 		"#format"		"{1:s},{2:s},{3:c},{4:c},{5:c},{6:c}"
-		"en"			"Voce nao tem um sava para o {3}{1}{4} no {5}{2}{6}"
-		"pt-br"			""
+		"en"			"You don't have a save for {3}{1}{4} on the {5}{2}{6}."
+		"pt-br"			"Voce nao tem um sava para o {3}{1}{4} no {5}{2}{6}."
 	}
 
 	"Teleport_Dead"
