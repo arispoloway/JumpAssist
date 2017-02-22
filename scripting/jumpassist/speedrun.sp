@@ -1255,32 +1255,36 @@ public UpdateSteamID(client){
 }
 
 public SQL_OnSteamIDCheck(Handle:owner, Handle:hndl, const String:error[], any:data){
-	new client = data;
-	new String:query[1024];
-
-	if (hndl == INVALID_HANDLE)
-	{
-		LogError("OnSpeedrunSubmit() - Query failed! %s", error);
-	}
-	else if (SQL_GetRowCount(hndl))
-	{
-		new String:name[64], String:steamid[32];
-		GetClientName(client, name, sizeof(name));
-		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-
-		Format(query, sizeof(query), "UPDATE steamids SET name='%s' WHERE SteamID='%s'", name, steamid);
-		SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
-
-	}
-	else
-	{
-		new String:name[64], String:steamid[32];
-		GetClientName(client, name, sizeof(name));
-		GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-
-		Format(query, sizeof(query), "INSERT INTO steamids VALUES(null,'%s', '%s');", steamid, name);
-		SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
-	}
+    new client = data;
+    new String:query[1024];
+ 
+    if (hndl == INVALID_HANDLE)
+    {
+        LogError("OnSpeedrunSubmit() - Query failed! %s", error);
+    }
+    else if (SQL_GetRowCount(hndl))
+    {
+        new String:name[64], String:steamid[32];
+        GetClientName(client, name, sizeof(name));
+        GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+ 
+        new String:nameEscaped[128];
+        SQL_EscapeString(g_hDatabase, name, nameEscaped, sizeof(nameEscaped));
+        Format(query, sizeof(query), "UPDATE steamids SET name='%s' WHERE SteamID='%s'", nameEscaped, steamid);
+        SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
+ 
+    }
+    else
+    {
+        new String:name[64], String:steamid[32];
+        GetClientName(client, name, sizeof(name));
+        GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
+ 
+        new String:nameEscaped[128];
+        SQL_EscapeString(g_hDatabase, name, nameEscaped, sizeof(nameEscaped));
+        Format(query, sizeof(query), "INSERT INTO steamids VALUES(null,'%s', '%s');", steamid, nameEscaped);
+        SQL_TQuery(g_hDatabase, SQL_OnSteamIDUpdate, query, client);
+    }
 }
 
 public SQL_OnSteamIDUpdate(Handle:owner, Handle:hndl, const String:error[], any:data){
