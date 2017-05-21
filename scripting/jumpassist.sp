@@ -227,7 +227,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.12"
+#define PLUGIN_VERSION "0.8.13"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
@@ -3010,8 +3010,9 @@ stock ReSupply(client, iWeapon)
 	switch(GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex"))
 	{
 		// Rocket Launchers
-		case 18,205,127,513,800,809,15006,15014,15028,15043,15052,15057,658,889,898,907,916,965,974:
+		case 18,205,127,513,800,809,15006,15014,15028,15043,15052,15057,658,889,898,907,916,965,974,15081, 15104, 15105, 15129, 15130, 15150:
 		{
+
 			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
 			SetAmmo(client, iWeapon, 20);
 		}
