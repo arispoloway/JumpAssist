@@ -45,43 +45,46 @@ ConnectToDatabase()
 }
 RunDBCheck()
 {
-	decl String:error[255], String:query[2048];
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL, `Capped` VARCHAR(32))");
+	decl String:error[255], String:query[2048], String:ident[64];
+	SQL_ReadDriver(g_hDatabase, ident, sizeof ident);
+	new bool:isMysql = StrEqual(ident, "mysql", false);
+	
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_saves` (`RecID` INTEGER NOT NULL PRIMARY KEY %s, `steamID` VARCHAR(32) NOT NULL, `playerClass` INT(1) NOT NULL, `playerTeam` INT(1) NOT NULL, `playerMap` VARCHAR(32) NOT NULL, `save1` INT(25) NOT NULL, `save2` INT(25) NOT NULL, `save3` INT(25) NOT NULL, `save4` INT(25) NOT NULL, `save5` INT(25) NOT NULL, `save6` INT(25) NOT NULL, `Capped` VARCHAR(32))", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (player_saves) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_profiles` (`ID` integer PRIMARY KEY AUTO_INCREMENT NOT NULL, `SteamID` text NOT NULL, `Health` integer NOT NULL DEFAULT 0, `Ammo` integer NOT NULL DEFAULT 0, `Hardcore` integer NOT NULL DEFAULT 0, `PlayerFOV` integer NOT NULL DEFAULT 90, `SKEYS_RED_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_GREEN_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_BLUE_COLOR`  INTEGER NOT NULL DEFAULT 255)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `player_profiles` (`ID` integer PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `Health` integer NOT NULL DEFAULT 0, `Ammo` integer NOT NULL DEFAULT 0, `Hardcore` integer NOT NULL DEFAULT 0, `PlayerFOV` integer NOT NULL DEFAULT 90, `SKEYS_RED_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_GREEN_COLOR`  INTEGER NOT NULL DEFAULT 255, `SKEYS_BLUE_COLOR`  INTEGER NOT NULL DEFAULT 255)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (player_profiles) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `map_settings` (`ID` integer PRIMARY KEY AUTO_INCREMENT NOT NULL, `Map` text NOT NULL, `Team` int NOT NULL, `LockCPs` int NOT NULL, `Class` int NOT NULL)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `map_settings` (`ID` integer PRIMARY KEY %s NOT NULL, `Map` text NOT NULL, `Team` int NOT NULL, `LockCPs` int NOT NULL, `Class` int NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (map_settings) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `Teleports` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `MapName` TEXT(32) NOT NULL, `TeleName` TEXT(64) NOT NULL, `L1` FLOAT NOT NULL, `L2` FLOAT NOT NULL, `L3` FLOAT NOT NULL, `A1` FLOAT NOT NULL, `A2` FLOAT NOT NULL, `A3` FLOAT NOT NULL)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `Teleports` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `MapName` TEXT(32) NOT NULL, `TeleName` TEXT(64) NOT NULL, `L1` FLOAT NOT NULL, `L2` FLOAT NOT NULL, `L3` FLOAT NOT NULL, `A1` FLOAT NOT NULL, `A2` FLOAT NOT NULL, `A3` FLOAT NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (teleports) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `startlocs` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `MapName` TEXT(32) NOT NULL, `x` FLOAT(25) NOT NULL, `y` FLOAT(25) NOT NULL, `z` FLOAT(25) NOT NULL, `xang` FLOAT(25) NOT NULL, `yang` FLOAT(25) NOT NULL, `zang` FLOAT(25) NOT NULL)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `startlocs` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `MapName` TEXT(32) NOT NULL, `x` FLOAT(25) NOT NULL, `y` FLOAT(25) NOT NULL, `z` FLOAT(25) NOT NULL, `xang` FLOAT(25) NOT NULL, `yang` FLOAT(25) NOT NULL, `zang` FLOAT(25) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
 		LogError("Failed to query (startlocs) (error: %s)", error);
 		SQL_UnlockDatabase(g_hDatabase);
 	}
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `zones` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `Number` INT(25) NOT NULL, `MapName` TEXT(32) NOT NULL, `x1` FLOAT(25) NOT NULL, `y1` FLOAT(25) NOT NULL, `z1` FLOAT(25) NOT NULL, `x2` FLOAT(25) NOT NULL, `y2` FLOAT(25) NOT NULL, `z2` FLOAT(25) NOT NULL)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `zones` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `Number` INT(25) NOT NULL, `MapName` TEXT(32) NOT NULL, `x1` FLOAT(25) NOT NULL, `y1` FLOAT(25) NOT NULL, `z1` FLOAT(25) NOT NULL, `x2` FLOAT(25) NOT NULL, `y2` FLOAT(25) NOT NULL, `z2` FLOAT(25) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
@@ -89,7 +92,7 @@ RunDBCheck()
 		SQL_UnlockDatabase(g_hDatabase);
 	}
 	SQL_UnlockDatabase(g_hDatabase);
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `times` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `SteamID` text NOT NULL, `class` INT(23) NOT NULL, `MapName` TEXT(32) NOT NULL, `time` BIGINT NOT NULL, `c0` FLOAT(25) DEFAULT '0.0', `c1` FLOAT(25) DEFAULT '0.0', `c2` FLOAT(25) DEFAULT '0.0', `c3` FLOAT(25) DEFAULT '0.0', `c4` FLOAT(25) DEFAULT '0.0', `c5` FLOAT(25) DEFAULT '0.0', `c6` FLOAT(25) DEFAULT '0.0', `c7` FLOAT(25) DEFAULT '0.0', `c8` FLOAT(25) DEFAULT '0.0', `c9` FLOAT(25) DEFAULT '0.0', `c10` FLOAT(25) DEFAULT '0.0', `c11` FLOAT(25) DEFAULT '0.0', `c12` FLOAT(25) DEFAULT '0.0', `c13` FLOAT(25) DEFAULT '0.0', `c14` FLOAT(25) DEFAULT '0.0', `c15` FLOAT(25) DEFAULT '0.0', `c16` FLOAT(25) DEFAULT '0.0', `c17` FLOAT(25) DEFAULT '0.0', `c18` FLOAT(25) DEFAULT '0.0', `c19` FLOAT(25) DEFAULT '0.0', `c20` FLOAT(25) DEFAULT '0.0', `c21` FLOAT(25) DEFAULT '0.0', `c22` FLOAT(25) DEFAULT '0.0', `c23` FLOAT(25) DEFAULT '0.0', `c24` FLOAT(25) DEFAULT '0.0', `c25` FLOAT(25) DEFAULT '0.0', `c26` FLOAT(25) DEFAULT '0.0', `c27` FLOAT(25) DEFAULT '0.0', `c28` FLOAT(25) DEFAULT '0.0', `c29` FLOAT(25) DEFAULT '0.0', `c30` FLOAT(25) DEFAULT '0.0', `c31` FLOAT(25) DEFAULT '0.0');");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `times` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `class` INT(23) NOT NULL, `MapName` TEXT(32) NOT NULL, `time` BIGINT NOT NULL, `c0` FLOAT(25) DEFAULT '0.0', `c1` FLOAT(25) DEFAULT '0.0', `c2` FLOAT(25) DEFAULT '0.0', `c3` FLOAT(25) DEFAULT '0.0', `c4` FLOAT(25) DEFAULT '0.0', `c5` FLOAT(25) DEFAULT '0.0', `c6` FLOAT(25) DEFAULT '0.0', `c7` FLOAT(25) DEFAULT '0.0', `c8` FLOAT(25) DEFAULT '0.0', `c9` FLOAT(25) DEFAULT '0.0', `c10` FLOAT(25) DEFAULT '0.0', `c11` FLOAT(25) DEFAULT '0.0', `c12` FLOAT(25) DEFAULT '0.0', `c13` FLOAT(25) DEFAULT '0.0', `c14` FLOAT(25) DEFAULT '0.0', `c15` FLOAT(25) DEFAULT '0.0', `c16` FLOAT(25) DEFAULT '0.0', `c17` FLOAT(25) DEFAULT '0.0', `c18` FLOAT(25) DEFAULT '0.0', `c19` FLOAT(25) DEFAULT '0.0', `c20` FLOAT(25) DEFAULT '0.0', `c21` FLOAT(25) DEFAULT '0.0', `c22` FLOAT(25) DEFAULT '0.0', `c23` FLOAT(25) DEFAULT '0.0', `c24` FLOAT(25) DEFAULT '0.0', `c25` FLOAT(25) DEFAULT '0.0', `c26` FLOAT(25) DEFAULT '0.0', `c27` FLOAT(25) DEFAULT '0.0', `c28` FLOAT(25) DEFAULT '0.0', `c29` FLOAT(25) DEFAULT '0.0', `c30` FLOAT(25) DEFAULT '0.0', `c31` FLOAT(25) DEFAULT '0.0');", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
@@ -97,7 +100,7 @@ RunDBCheck()
 		SQL_UnlockDatabase(g_hDatabase);
 	}
 	SQL_UnlockDatabase(g_hDatabase);
-	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `steamids` (`ID` INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, `SteamID` text NOT NULL, `name` TEXT(64) NOT NULL)");
+	Format(query, sizeof(query), "CREATE TABLE IF NOT EXISTS `steamids` (`ID` INTEGER PRIMARY KEY %s NOT NULL, `SteamID` text NOT NULL, `name` TEXT(64) NOT NULL)", isMysql?"AUTO_INCREMENT":"AUTOINCREMENT");
 	if (!SQL_FastQuery(g_hDatabase, query))
 	{
 		SQL_GetError(g_hDatabase, error, sizeof(error));
