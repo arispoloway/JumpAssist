@@ -3009,13 +3009,12 @@ stock ReSupply(client, iWeapon)
 	// Primary Weapons
 	switch(GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex"))
 	{
-		// Rocket Launchers
-		case 18,205,127,513,800,809,15006,15014,15028,15043,15052,15057,658,889,898,907,916,965,974,15081, 15104, 15105, 15129, 15130, 15150:
-		{
-
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
-			SetAmmo(client, iWeapon, 20);
-		}
+        // Rocket Launchers
+        case 18, 205, 127, 513, 658, 800, 809, 889, 898, 907, 916, 965, 974, 15006, 15014, 15028, 15043, 15052, 15057, 15081, 15104, 15105, 15129, 15130, 15150:
+        {
+            SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
+            SetAmmo(client, iWeapon, 20);
+        }
 		// Black box, Liberty launcher.
 		case 228, 414:
 		{
@@ -3041,12 +3040,12 @@ stock ReSupply(client, iWeapon)
 		}
 		*/
 
-		// Stickybomb Launchers
-		case 20, 207, 661, 806, 895,904,913,962,971,15009,15012,15024,15038,15045,15048:
-		{
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
-			SetAmmo(client, iWeapon, 24);
-		}
+        // Stickybomb Launchers
+        case 20, 207, 661, 806, 895, 904, 913, 962, 971, 15009, 15012, 15024, 15038, 15045, 15048, 15082, 15083, 15084, 15113, 15137, 15138, 15155:
+        {
+            SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
+            SetAmmo(client, iWeapon, 24);
+        }
 		// Sticky jumper
 		case 265:
 		{
@@ -3059,12 +3058,12 @@ stock ReSupply(client, iWeapon)
 			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
 			SetAmmo(client, iWeapon, 36);
 		}
-		// Heavy, soldier, pyro, and engineer shotgun
-		case 9, 10, 11, 12, 199:
-		{
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 6);
-			SetAmmo(client, iWeapon, 32);
-		}
+        // Heavy, soldier, pyro, and engineer shotgun
+        case 9,10,11,12,199,997,1141,1153,15003,15016,15044,15047,15085,15109,15132,15133,15152:
+        {
+            SetEntProp(iWeapon, Prop_Data, "m_iClip1", 6);
+            SetAmmo(client, iWeapon, 32);
+        }
  		//Begger's bazooka
 		case 730:
 		{
