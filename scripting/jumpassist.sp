@@ -306,16 +306,16 @@ public OnPluginStart()
 	RegPluginLibrary("jumpassist");
 
 	// ConVars
-	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
-	g_hPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	g_hPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
+	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
+	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_NOTIFY);
+	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
+	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_NOTIFY);
+	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
+	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
+	g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_NOTIFY);
+	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
 	decl String:sDesc[128]="";
 	Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
 	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
