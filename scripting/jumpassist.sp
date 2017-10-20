@@ -201,8 +201,6 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <sdktools>
-#include <tf2>
 #include <tf2_stocks>
 #include <sdkhooks>
 
