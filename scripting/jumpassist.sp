@@ -397,8 +397,6 @@ public OnPluginStart()
 #endif
 
 
-
-
 	// Hooks
 	HookEvent("player_team", eventPlayerChangeTeam);
 	HookEvent("player_changeclass", eventPlayerChangeClass);
@@ -497,8 +495,6 @@ stock bool:VerifyBranch(String:branch[],len)
 	return false;
 }
 
-
-
 public OnLibraryAdded(const String:name[])
 {
     if (StrEqual(name, "updater"))
@@ -561,7 +557,6 @@ public Action:Updater_OnPluginDownloading()
 }
 
 #endif
-
 
 public Updater_OnPluginUpdated()
 {
@@ -771,8 +766,6 @@ stock BuildSentry(hBuilder, const Float:fOrigin[3], const Float:fAngle[3], iLeve
     return iSentry;
 }
 
-
-
 SentryOnGameFrame(){
 
 	new i = -1;
@@ -859,9 +852,6 @@ SentryOnGameFrame(){
 
 }
 
-
-
-
 public OnGameFrame(){
 	SkeysOnGameFrame();
 	if(GetConVarBool(hSpeedrunEnabled)){
@@ -871,21 +861,6 @@ public OnGameFrame(){
 		SentryOnGameFrame();
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Support for beggers bazooka
 Hook_Func_regenerate()
@@ -911,11 +886,6 @@ HookFunc(entity)
 	SDKHook(entity,SDKHook_Touch,OnPlayerStartTouchFuncRegenerate);
 	SDKHook(entity,SDKHook_EndTouch,OnPlayerStartTouchFuncRegenerate);
 }
-
-
-
-
-
 
 public OnMapStart()
 {
@@ -1076,7 +1046,6 @@ public Action:cmdRaceInitialize(client, args)
 	return;
 }
 
-
 public ControlPointSelector(Handle:menu, MenuAction:action, param1, param2)
 {
 
@@ -1097,8 +1066,6 @@ public ControlPointSelector(Handle:menu, MenuAction:action, param1, param2)
 	}
 
 }
-
-
 
 public Action:cmdRaceInvite(client, args)
 {
@@ -1246,7 +1213,6 @@ public Menu_InvitePlayers(Handle:menu, MenuAction:action, param1, param2)
 		CloseHandle(menu);
 	}
 }
-
 
 public InviteHandler(Handle:menu, MenuAction:action, param1, param2)
 {
@@ -1420,8 +1386,6 @@ public ListHandler(Handle:menu, MenuAction:action, param1, param2)
 
 }
 
-
-
 public Action:cmdRaceInfo(client, args)
 {
 	if (!IsValidClient(client)) { return; }
@@ -1448,9 +1412,6 @@ public Action:cmdRaceInfo(client, args)
 	}else{
 		iClientToShow = client;
 	}
-
-
-
 
 	new String:leader[32];
 	new String:leaderFormatted[64];
@@ -1503,9 +1464,6 @@ public Action:cmdRaceInfo(client, args)
 	SendPanelToClient(panel, client, InfoHandler, 30);
 
 	CloseHandle(panel);
-
-
-
 }
 
 public InfoHandler(Handle:menu, MenuAction:action, param1, param2)
@@ -1521,9 +1479,6 @@ public InfoHandler(Handle:menu, MenuAction:action, param1, param2)
 	// }
 
 }
-
-
-
 
 public Action:cmdRaceStart(client, args)
 {
@@ -1620,8 +1575,6 @@ public Action:cmdRaceLeave(client, args)
 
 }
 
-
-
 public Action:cmdServerRace(client, args)
 {
 
@@ -1648,12 +1601,10 @@ public Action:cmdRaceInitializeServer(client, args)
 		LeaveRace(client);
 	}
 
-
 	if (IsClientRacing(client)){
 		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race.");
 		return;
 	}
-
 
 	g_bRace[client] = client;
 	g_bRaceStatus[client] = 1;
@@ -1681,7 +1632,6 @@ public Action:cmdRaceInitializeServer(client, args)
 
 public ControlPointSelectorServer(Handle:menu, MenuAction:action, param1, param2)
 {
-
 	if (action == MenuAction_Select)
 	{
 		new String:info[32];
@@ -1721,7 +1671,6 @@ public ControlPointSelectorServer(Handle:menu, MenuAction:action, param1, param2
 	{
 		CloseHandle(menu);
 	}
-
 }
 
 
@@ -1766,8 +1715,6 @@ public Action:cmdRaceSpec(client, args){
 	}
 	return Plugin_Continue;
 }
-
-
 
 public Action:cmdRaceSet(client, args){
 	if(!IsValidClient(client)){return Plugin_Handled; }
@@ -1827,10 +1774,6 @@ public Action:cmdRaceSet(client, args){
 
 }
 
-
-
-
-
 stock ApplyRaceSettings(race){
 
 	for (new i = 1; i <= GetMaxClients(); i++)
@@ -1844,16 +1787,10 @@ stock ApplyRaceSettings(race){
 
 }
 
-
-
 stock GetSpecRace(client)
 {
 	return g_bRaceSpec[client];
 }
-
-
-
-
 
 stock GetPlayersInRace(raceID)
 {
@@ -1867,7 +1804,6 @@ stock GetPlayersInRace(raceID)
 	}
 	return players;
 }
-
 
 stock GetPlayersStillRacing(raceID)
 {
@@ -1936,11 +1872,7 @@ stock LeaveRace(client){
 									g_bRace[j] = newRace;
 								}
 							}
-
 							return;
-
-
-
 						}
 					}
 			}
@@ -1994,7 +1926,6 @@ stock ResetRace(raceID)
 
 }
 
-
 stock EmitSoundToRace (raceID, String:sound[])
 {
 	for (new i = 1; i <= GetMaxClients(); i++)
@@ -2018,7 +1949,6 @@ stock EmitSoundToNotRace (raceID, String:sound[])
 	}
 	return;
 }
-
 
 stock bool:IsClientRacing(client){
 	if (g_bRace[client] != 0){
@@ -2126,8 +2056,6 @@ stock String:FormatTimeComponent(time){
 	return final;
 }
 
-
-
 stock bool:IsRaceOver(client){
 	if(g_bRaceStatus[client] == 5){
 		return true;
@@ -2135,68 +2063,6 @@ stock bool:IsRaceOver(client){
 	return false;
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // public Action:cmdSpec(client, args){
 // 	if(!IsValidClient(client)){return Plugin_Handled; }
@@ -2231,8 +2097,6 @@ stock bool:IsRaceOver(client){
 // 	}
 // 	return Plugin_Continue;
 // }
-
-
 
 public Action:cmdToggleAmmo(client, args)
 {
@@ -2277,7 +2141,6 @@ public Action:cmdToggleHardcore(client, args)
 	Hardcore(client);
 
 }
-
 
 public Action:cmdJAHelp(client, args)
 {
@@ -2370,8 +2233,6 @@ public HelpMenuHandler(Handle:menu, MenuAction:action, param1, param2){
 		cmdJAHelp(param1, 0);
 	}
 }
-
-
 
 stock bool:IsUsingJumper(client)
 {
@@ -2978,9 +2839,6 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 
 	return Plugin_Continue;
 }
-
-
-
 public SDKHook_OnWeaponEquipPost(client, weapon)
 {
 	if (IsValidClient(client))
@@ -3454,10 +3312,6 @@ public Action:OnPlayerStartTouchFuncRegenerate(entity, other)
 #endif
 	return Plugin_Continue;
 }
-
-
-
-
 public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
