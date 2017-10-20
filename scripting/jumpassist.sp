@@ -201,8 +201,6 @@
 #pragma semicolon 1
 
 #include <sourcemod>
-#include <sdktools>
-#include <tf2>
 #include <tf2_stocks>
 #include <sdkhooks>
 
@@ -306,16 +304,16 @@ public OnPluginStart()
 	RegPluginLibrary("jumpassist");
 
 	// ConVars
-	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_PLUGIN|FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
-	g_hPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_PLUGIN|FCVAR_NOTIFY);
-	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_PLUGIN|FCVAR_NOTIFY);
+	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	g_hPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
+	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
+	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_NOTIFY);
+	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
+	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_NOTIFY);
+	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
+	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
+	g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_NOTIFY);
+	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
 	decl String:sDesc[128]="";
 	Format(sDesc,sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
 	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
@@ -397,8 +395,6 @@ public OnPluginStart()
 #if defined DEBUG
 	RegAdminCmd("sm_ja_update_force", Command_Update, ADMFLAG_RCON, "Forces update check of plugin");
 #endif
-
-
 
 
 	// Hooks
@@ -499,8 +495,6 @@ stock bool:VerifyBranch(String:branch[],len)
 	return false;
 }
 
-
-
 public OnLibraryAdded(const String:name[])
 {
     if (StrEqual(name, "updater"))
@@ -563,7 +557,6 @@ public Action:Updater_OnPluginDownloading()
 }
 
 #endif
-
 
 public Updater_OnPluginUpdated()
 {
@@ -773,8 +766,6 @@ stock BuildSentry(hBuilder, const Float:fOrigin[3], const Float:fAngle[3], iLeve
     return iSentry;
 }
 
-
-
 SentryOnGameFrame(){
 
 	new i = -1;
@@ -861,9 +852,6 @@ SentryOnGameFrame(){
 
 }
 
-
-
-
 public OnGameFrame(){
 	SkeysOnGameFrame();
 	if(GetConVarBool(hSpeedrunEnabled)){
@@ -873,21 +861,6 @@ public OnGameFrame(){
 		SentryOnGameFrame();
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Support for beggers bazooka
 Hook_Func_regenerate()
@@ -913,11 +886,6 @@ HookFunc(entity)
 	SDKHook(entity,SDKHook_Touch,OnPlayerStartTouchFuncRegenerate);
 	SDKHook(entity,SDKHook_EndTouch,OnPlayerStartTouchFuncRegenerate);
 }
-
-
-
-
-
 
 public OnMapStart()
 {
@@ -1078,7 +1046,6 @@ public Action:cmdRaceInitialize(client, args)
 	return;
 }
 
-
 public ControlPointSelector(Handle:menu, MenuAction:action, param1, param2)
 {
 
@@ -1099,8 +1066,6 @@ public ControlPointSelector(Handle:menu, MenuAction:action, param1, param2)
 	}
 
 }
-
-
 
 public Action:cmdRaceInvite(client, args)
 {
@@ -1248,7 +1213,6 @@ public Menu_InvitePlayers(Handle:menu, MenuAction:action, param1, param2)
 		CloseHandle(menu);
 	}
 }
-
 
 public InviteHandler(Handle:menu, MenuAction:action, param1, param2)
 {
@@ -1422,8 +1386,6 @@ public ListHandler(Handle:menu, MenuAction:action, param1, param2)
 
 }
 
-
-
 public Action:cmdRaceInfo(client, args)
 {
 	if (!IsValidClient(client)) { return; }
@@ -1450,9 +1412,6 @@ public Action:cmdRaceInfo(client, args)
 	}else{
 		iClientToShow = client;
 	}
-
-
-
 
 	new String:leader[32];
 	new String:leaderFormatted[64];
@@ -1505,9 +1464,6 @@ public Action:cmdRaceInfo(client, args)
 	SendPanelToClient(panel, client, InfoHandler, 30);
 
 	CloseHandle(panel);
-
-
-
 }
 
 public InfoHandler(Handle:menu, MenuAction:action, param1, param2)
@@ -1523,9 +1479,6 @@ public InfoHandler(Handle:menu, MenuAction:action, param1, param2)
 	// }
 
 }
-
-
-
 
 public Action:cmdRaceStart(client, args)
 {
@@ -1622,8 +1575,6 @@ public Action:cmdRaceLeave(client, args)
 
 }
 
-
-
 public Action:cmdServerRace(client, args)
 {
 
@@ -1650,12 +1601,10 @@ public Action:cmdRaceInitializeServer(client, args)
 		LeaveRace(client);
 	}
 
-
 	if (IsClientRacing(client)){
 		PrintToChat(client, "\x01[\x03JA\x01] You are already in a race.");
 		return;
 	}
-
 
 	g_bRace[client] = client;
 	g_bRaceStatus[client] = 1;
@@ -1683,7 +1632,6 @@ public Action:cmdRaceInitializeServer(client, args)
 
 public ControlPointSelectorServer(Handle:menu, MenuAction:action, param1, param2)
 {
-
 	if (action == MenuAction_Select)
 	{
 		new String:info[32];
@@ -1723,7 +1671,6 @@ public ControlPointSelectorServer(Handle:menu, MenuAction:action, param1, param2
 	{
 		CloseHandle(menu);
 	}
-
 }
 
 
@@ -1768,8 +1715,6 @@ public Action:cmdRaceSpec(client, args){
 	}
 	return Plugin_Continue;
 }
-
-
 
 public Action:cmdRaceSet(client, args){
 	if(!IsValidClient(client)){return Plugin_Handled; }
@@ -1829,10 +1774,6 @@ public Action:cmdRaceSet(client, args){
 
 }
 
-
-
-
-
 stock ApplyRaceSettings(race){
 
 	for (new i = 1; i <= GetMaxClients(); i++)
@@ -1846,16 +1787,10 @@ stock ApplyRaceSettings(race){
 
 }
 
-
-
 stock GetSpecRace(client)
 {
 	return g_bRaceSpec[client];
 }
-
-
-
-
 
 stock GetPlayersInRace(raceID)
 {
@@ -1869,7 +1804,6 @@ stock GetPlayersInRace(raceID)
 	}
 	return players;
 }
-
 
 stock GetPlayersStillRacing(raceID)
 {
@@ -1938,11 +1872,7 @@ stock LeaveRace(client){
 									g_bRace[j] = newRace;
 								}
 							}
-
 							return;
-
-
-
 						}
 					}
 			}
@@ -1996,7 +1926,6 @@ stock ResetRace(raceID)
 
 }
 
-
 stock EmitSoundToRace (raceID, String:sound[])
 {
 	for (new i = 1; i <= GetMaxClients(); i++)
@@ -2020,7 +1949,6 @@ stock EmitSoundToNotRace (raceID, String:sound[])
 	}
 	return;
 }
-
 
 stock bool:IsClientRacing(client){
 	if (g_bRace[client] != 0){
@@ -2128,8 +2056,6 @@ stock String:FormatTimeComponent(time){
 	return final;
 }
 
-
-
 stock bool:IsRaceOver(client){
 	if(g_bRaceStatus[client] == 5){
 		return true;
@@ -2137,68 +2063,6 @@ stock bool:IsRaceOver(client){
 	return false;
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // public Action:cmdSpec(client, args){
 // 	if(!IsValidClient(client)){return Plugin_Handled; }
@@ -2233,8 +2097,6 @@ stock bool:IsRaceOver(client){
 // 	}
 // 	return Plugin_Continue;
 // }
-
-
 
 public Action:cmdToggleAmmo(client, args)
 {
@@ -2279,7 +2141,6 @@ public Action:cmdToggleHardcore(client, args)
 	Hardcore(client);
 
 }
-
 
 public Action:cmdJAHelp(client, args)
 {
@@ -2372,8 +2233,6 @@ public HelpMenuHandler(Handle:menu, MenuAction:action, param1, param2){
 		cmdJAHelp(param1, 0);
 	}
 }
-
-
 
 stock bool:IsUsingJumper(client)
 {
@@ -2980,9 +2839,6 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 
 	return Plugin_Continue;
 }
-
-
-
 public SDKHook_OnWeaponEquipPost(client, weapon)
 {
 	if (IsValidClient(client))
@@ -2998,79 +2854,99 @@ stock bool:IsValidWeapon(iEntity)
 	if (IsValidEntity(iEntity) && GetEntityClassname(iEntity, strClassname, sizeof(strClassname)) && StrContains(strClassname, "tf_weapon", false) != -1) return true;
 	return false;
 }
-stock ReSupply(client, iWeapon)
+stock void ReSupply(int iClient, int iWeapon)
 {
-	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	if (!IsValidWeapon(iWeapon))
-	{
-		return;
-	}
+	if (!GetConVarBool(g_hPluginEnabled)) return;					//Check if the plugin is enabled
+	if (!IsValidWeapon(iWeapon)) return;								//Check if the weapon is valid
+	if (!IsValidClient(iClient) || !IsPlayerAlive(iClient)) return;	//Check if the client is valid and alive
 
-	// Primary Weapons
-	switch(GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex"))
+	int iWepIndex = GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex");	//Grab the weapon index
+	char szClassname[128];
+	GetEntityClassname(iWeapon, szClassname, sizeof(szClassname));				//Grab the weapon's classname
+	
+	//Rocket Launchers
+	if (!StrContains(szClassname, "tf_weapon_rocketlauncher") || !StrContains(szClassname, "tf_weapon_particle_cannon")) //Check for Rocket Launchers
 	{
-        // Rocket Launchers
-        case 18, 205, 127, 513, 658, 800, 809, 889, 898, 907, 916, 965, 974, 15006, 15014, 15028, 15043, 15052, 15057, 15081, 15104, 15105, 15129, 15130, 15150:
-        {
-            SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
-            SetAmmo(client, iWeapon, 20);
-        }
-		// Black box, Liberty launcher.
-		case 228, 414:
+		switch (iWepIndex)
 		{
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 3);
-			SetAmmo(client, iWeapon, 20);
-		}
-		// Rocket Jumper
-		case 237:
-		{
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 4);
-			SetAmmo(client, iWeapon, 60);
-		}
-
-		// Ullapool caber
-		/* Removed
-		case 307:
-		{
-			if (GetConVarBool(g_hReloadUC))
+			case 441: //The Cow Mangler 5000
 			{
-				SetEntProp(iWeapon, Prop_Send, "m_bBroken", 0);
-				SetEntProp(iWeapon, Prop_Send, "m_iDetonated", 0);
+				SetEntPropFloat(iWeapon, Prop_Send, "m_flEnergy", 100.0);	//Cow Mangler uses Energy instead of ammo.
+			}
+			case 228, 1085: //Black Box
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 3);
+			}
+			case 414: //Liberty Launcher
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 5);
+			}
+			case 730: {} //Beggar's Bazooka - This is here so we don't keep refilling its clip infinitely.
+			default: //The default action for Rocket Launchers. This basically future proofs it for any new Rocket Launchers unless they have a totally different classname like the CM5K.
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 4); //Technically we don't need to make extra cases for different clip sizes, since players are constantly ReSupply()'d, but whatever.
 			}
 		}
-		*/
-
-        // Stickybomb Launchers
-        case 20, 207, 661, 806, 895, 904, 913, 962, 971, 15009, 15012, 15024, 15038, 15045, 15048, 15082, 15083, 15084, 15113, 15137, 15138, 15155:
-        {
-            SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
-            SetAmmo(client, iWeapon, 24);
-        }
-		// Sticky jumper
-		case 265:
-		{
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
-			SetAmmo(client, iWeapon, 72);
-		}
-		// Scottish Resistance
-		case 130:
-		{
-			SetEntProp(iWeapon, Prop_Data, "m_iClip1", 8);
-			SetAmmo(client, iWeapon, 36);
-		}
-        // Heavy, soldier, pyro, and engineer shotgun
-        case 9,10,11,12,199,997,1141,1153,15003,15016,15044,15047,15085,15109,15132,15133,15152:
-        {
-            SetEntProp(iWeapon, Prop_Data, "m_iClip1", 6);
-            SetAmmo(client, iWeapon, 32);
-        }
- 		//Begger's bazooka
-		case 730:
-		{
-			SetAmmo(client,iWeapon,20);
-		}
-
+		GivePlayerAmmo(iClient, 100, view_as<int>(TFWeaponSlot_Primary)+1, false); //Refill the player's ammo supply to whatever the weapon's max is.
 	}
+	//Stickybomb Launchers
+	if (!StrContains(szClassname, "tf_weapon_pipebomblauncher")) //Check for Stickybomb Launchers
+	{
+		switch (iWepIndex)
+		{
+			case 1150: //Quickiebomb Launcher
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 4);
+			}
+			default: //The default action for Stickybomb Launchers
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 8);
+			}
+		}
+		GivePlayerAmmo(iClient, 100, view_as<int>(TFWeaponSlot_Secondary)+1, false); //Refill the player's ammo supply to whatever the weapon's max is.
+	}
+	//Shotguns
+	if (!StrContains(szClassname, "tf_weapon_shotgun") || !StrContains(szClassname, "tf_weapon_sentry_revenge")) //Check for Shotguns
+	{
+		switch (iWepIndex)
+		{
+			case 425: //Family Business
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 8);
+			}
+			case 997, 415: //Rescue Ranger, Reserve Shooter
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 4);
+			}
+			case 141, 1004: //Frontier Justice
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 3);
+			}
+			case 527: //Widowmaker
+			{
+				SetEntProp(iClient, Prop_Data, "m_iAmmo", 200, _, 3); //Sets Metal count to 200
+			}
+			default: //The default action for Shotguns
+			{
+				SetEntProp(iWeapon, Prop_Send, "m_iClip1", 6);
+			}
+		}
+		if (TF2_GetPlayerClass(iClient) == TFClass_Engineer)
+			GivePlayerAmmo(iClient, 100, view_as<int>(TFWeaponSlot_Primary)+1, false); //Refill the player's ammo supply to whatever the weapon's max is.
+		else
+			GivePlayerAmmo(iClient, 100, view_as<int>(TFWeaponSlot_Secondary)+1, false); //Refill the player's ammo supply to whatever the weapon's max is.
+	}
+	// Ullapool caber
+	/* Removed
+	if (!StrContains(szClassname, "tf_weapon_stickbomb"))
+	{
+		if (GetConVarBool(g_hReloadUC))
+		{
+			SetEntProp(iWeapon, Prop_Send, "m_bBroken", 0);
+			SetEntProp(iWeapon, Prop_Send, "m_iDetonated", 0);
+		}
+	}
+	*/
 }
 stock SetAmmo(client, iWeapon, iAmmo)
 {
@@ -3436,10 +3312,6 @@ public Action:OnPlayerStartTouchFuncRegenerate(entity, other)
 #endif
 	return Plugin_Continue;
 }
-
-
-
-
 public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	if (!GetConVarBool(g_hPluginEnabled)) { return; }
