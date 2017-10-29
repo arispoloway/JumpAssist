@@ -2571,7 +2571,7 @@ public Action:cmdTele(client, args)
 		return Plugin_Handled;
 	}
 	Teleport(client);
-	g_iLastTeleport[client] = GetEngineTime();
+	g_iLastTeleport[client] = RoundFloat(GetEngineTime());
 	return Plugin_Handled;
 }
 public Action:cmdSave(client, args)
@@ -3446,7 +3446,7 @@ public Action:eventTouchCP(Handle:event, const String:name[], bool:dontBroadcast
 				}
 
 
-				if (!g_bCPTouched[client][area] && ((GetEngineTime() - g_iLastTeleport[client]) > 60)){
+				if (!g_bCPTouched[client][area] && ((RoundFloat(GetEngineTime()) - g_iLastTeleport[client]) > 5)){
 					GetEntPropString(entity, Prop_Data, "m_iszPrintName", cpName, sizeof(cpName));
 
 					if (g_bHardcore[client])

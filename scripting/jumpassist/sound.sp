@@ -6,7 +6,10 @@ new String:g_sSoundHook[][] =
 {
 	"regenerate",
 	"ammo_pickup",
-	"pain"
+	"pain",
+	"fall_damage", 
+	"grenade_jump", 
+	"fleshbreak"
 };
 
 public Action:sound_hook(clients[64], &numClients, String:sample[PLATFORM_MAX_PATH], &entity, &channel, &Float:volume, &level, &pitch, &flags)
