@@ -68,7 +68,7 @@
 	
 	"Hardcore_On"
 	{
-		"en"			"Your saves, and teleports have been disabled.
+		"en"			"Your saves, and teleports have been disabled."
 		"pt-br"			"Seus saves, e teletransportes foram desativados."
 	}
 	
