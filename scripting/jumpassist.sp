@@ -172,6 +172,7 @@
 	* - Jondy
 	* - Pizza Butt 8)
 	* - 0beezy
+	* - JoinedSenses
 	**********************************************************************************************************************************
 
 
@@ -225,7 +226,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.17"
+#define PLUGIN_VERSION "0.8.2"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
@@ -563,302 +564,11 @@ public Updater_OnPluginUpdated()
 	LogMessage("Update complete.");
 	ReloadPlugin();
 }
-    enum TFExtObjectType
-    {
-        TFExtObject_Unknown = -1,
-        TFExtObject_CartDispenser = 0,
-        TFExtObject_Dispenser = 0,
-        TFExtObject_Teleporter = 1,
-        TFExtObject_Sentry = 2,
-        TFExtObject_Sapper = 3,
-        TFExtObject_TeleporterEntry,
-        TFExtObject_TeleporterExit,
-        TFExtObject_MiniSentry,
-        TFExtObject_Amplifier,
-        TFExtObject_RepairNode
-    };
-
-    stock const String:TF2_ObjectClassNames[TFExtObjectType][] =
-    {
-        "obj_dispenser",
-        "obj_teleporter",
-        "obj_sentrygun",
-        "obj_sapper",
-        "obj_teleporter", // _entrance
-        "obj_teleporter", // _exit
-        "obj_sentrygun",  // minisentry
-        "obj_dispenser",  // amplifier
-        "obj_dispenser"   // repair_node
-    };
-
-    stock const String:TF2_ObjectNames[TFExtObjectType][] =
-    {
-        "Dispenser",
-        "Teleporter",
-        "Sentry Gun",
-        "Sapper",
-        "Teleporter Entrance",
-        "Teleporter Exit",
-        "Mini Sentry Gun",
-        "Amplifier",
-        "Repair Node"
-    };
-
-    stock TF2_ObjectModes[TFExtObjectType] =
-    {
-        -1, // dispenser
-        -1, // teleporter (either)
-        -1, // sentrygun
-        -1, // sapper
-         0, // telporter_entrance
-         1, // teleporter_exit
-        -1, // minisentry
-        -1, // amplifier
-        -1  // repair_node
-    };
-
-    // Max Sentry Ammo for Level:         mini,   1,   2,   3, max
-    stock const TF2_MaxSentryShells[]  = { 150, 100, 120, 144,  255 };
-    stock const TF2_MaxSentryRockets[] = {   0,   0,   0,  20,   63 };
-    stock const TF2_SentryHealth[]     = { 100, 150, 180, 216, 8191 };
-
-    stock const TF2_MaxUpgradeMetal    = 200;
-    stock const TF2_MaxDispenserMetal  = 400;
-
-stock BuildSentry(hBuilder, const Float:fOrigin[3], const Float:fAngle[3], iLevel=1,
-                  bool:bDisabled=false, bool:bMini=false, bool:bShielded=false,
-                  iHealth=-1, iMaxHealth=-1, iShells=-1, iRockets=-1,
-                  Float:flPercentage=1.0)
-{
-    static const Float:fBuildMaxs[3] = { 24.0, 24.0, 66.0 };
-    //static const Float:fMdlWidth[3] = { 1.0, 0.5, 0.0 };
-
-    new iTeam = GetClientTeam(hBuilder);
-
-    new iSentryHealth;
-    new iMaxSentryShells;
-    new iMaxSentryRockets;
-    if (iLevel < 1 || bMini)
-    {
-        iLevel = 1;
-        iSentryHealth = TF2_SentryHealth[0];
-        iMaxSentryShells = TF2_MaxSentryShells[0];
-        iMaxSentryRockets = TF2_MaxSentryRockets[0];
-    }
-    else if (iLevel <= 3)
-    {
-        iSentryHealth = TF2_SentryHealth[iLevel];
-        iMaxSentryShells = TF2_MaxSentryShells[iLevel];
-        iMaxSentryRockets = TF2_MaxSentryRockets[iLevel];
-    }
-    else if (iLevel == 4)
-    {
-        iLevel = 3;
-        iSentryHealth = TF2_SentryHealth[3]+40;
-        iMaxSentryShells = (TF2_MaxSentryShells[3]+TF2_MaxSentryShells[4])/2;
-        iMaxSentryRockets = (TF2_MaxSentryRockets[3]+TF2_MaxSentryRockets[4])/2;
-    }
-    else
-    {
-        iLevel = 3;
-        iSentryHealth = TF2_SentryHealth[4];
-        iMaxSentryShells = TF2_MaxSentryShells[4];
-        iMaxSentryRockets = TF2_MaxSentryRockets[4];
-    }
-
-    if (iShells < 0)
-        iRockets = iMaxSentryRockets;
-
-    if (iShells < 0)
-        iShells = iMaxSentryShells;
-
-    if (iMaxHealth < 0)
-        iMaxHealth = iSentryHealth;
-
-    if (iHealth < 0 || iHealth > iMaxHealth)
-        iHealth = iMaxHealth;
-
-    new iSentry = CreateEntityByName(TF2_ObjectClassNames[TFExtObject_Sentry]);
-    if (iSentry > 0 && IsValidEdict(iSentry))
-    {
-        DispatchSpawn(iSentry);
-
-        TeleportEntity(iSentry, fOrigin, fAngle, NULL_VECTOR);
-
-        decl String:sModel[64];
-        if (bMini)
-            strcopy(sModel, sizeof(sModel),"models/buildables/sentry1.mdl");
-        else
-            Format(sModel, sizeof(sModel),"models/buildables/sentry%d.mdl", iLevel);
-
-        SetEntityModel(iSentry,sModel);
-
-        // m_bPlayerControlled is set to make m_bShielded work,
-        // but it gets reset almost immediately :(
-
-        SetEntProp(iSentry, Prop_Send, "m_iMaxHealth", 				        iMaxHealth, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iHealth", 					    iHealth, 4);
-        SetEntProp(iSentry, Prop_Send, "m_bDisabled", 				        bDisabled, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bShielded", 				        bShielded, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bPlayerControlled", 				bShielded, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bMiniBuilding", 				    bMini, 2);
-        SetEntProp(iSentry, Prop_Send, "m_iObjectType", 				    _:TFExtObject_Sentry, 1);
-        SetEntProp(iSentry, Prop_Send, "m_iUpgradeLevel", 			        iLevel, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iAmmoRockets", 				    iRockets, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iAmmoShells" , 				    iShells, 4);
-        SetEntProp(iSentry, Prop_Send, "m_iState" , 				        (bShielded ? 2 : 0), 4);
-        SetEntProp(iSentry, Prop_Send, "m_iObjectMode", 				    0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_iUpgradeMetal", 			        0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bBuilding", 				        0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_bPlacing", 					    0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_iState", 					        1, 1);
-        SetEntProp(iSentry, Prop_Send, "m_bHasSapper", 				        0, 2);
-        SetEntProp(iSentry, Prop_Send, "m_nNewSequenceParity", 		        4, 4);
-        SetEntProp(iSentry, Prop_Send, "m_nResetEventsParity", 		        4, 4);
-        SetEntProp(iSentry, Prop_Send, "m_bServerOverridePlacement", 	    1, 1);
-        SetEntProp(iSentry, Prop_Send, "m_nSequence",                       0);
-
-        SetEntPropEnt(iSentry, Prop_Send, "m_hBuilder", 	                hBuilder);
-
-        SetEntPropFloat(iSentry, Prop_Send, "m_flPercentageConstructed", 	flPercentage);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flModelWidthScale", 	        1.0);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flPlaybackRate", 			1.0);
-        SetEntPropFloat(iSentry, Prop_Send, "m_flCycle", 					0.0);
-
-        SetEntPropVector(iSentry, Prop_Send, "m_vecOrigin", 			    fOrigin);
-        SetEntPropVector(iSentry, Prop_Send, "m_angRotation", 		        fAngle);
-        SetEntPropVector(iSentry, Prop_Send, "m_vecBuildMaxs", 		        fBuildMaxs);
-        //SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),	fMdlWidth, true);
-
-        if (bMini)
-        {
-            SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    iTeam, 1);
-            SetEntProp(iSentry, Prop_Send, "m_nBody", 					    5, 1);
-        }
-        else
-        {
-            SetEntProp(iSentry, Prop_Send, "m_nSkin", 					    (iTeam-2), 1);
-            SetEntProp(iSentry, Prop_Send, "m_nBody", 					    0, 1);
-        }
-
-        SetVariantInt(iTeam);
-        AcceptEntityInput(iSentry, "TeamNum", -1, -1, 0);
-
-        SetVariantInt(iTeam);
-        AcceptEntityInput(iSentry, "SetTeam", -1, -1, 0);
-
-        SetVariantInt(hBuilder);
-        AcceptEntityInput(iSentry, "SetBuilder", -1, -1, 0);
-
-        new Handle:event = CreateEvent("player_builtobject");
-        if (event != INVALID_HANDLE)
-        {
-            SetEventInt(event, "userid", GetClientUserId(hBuilder));
-            SetEventInt(event, "object", _:TFExtObject_Sentry);
-            SetEventInt(event, "index", iSentry);
-            SetEventBool(event, "sourcemod", true);
-            FireEvent(event);
-        }
-
-        g_WasBuilt[iSentry] = true;
-        g_HasBuilt[hBuilder] |= HasBuiltSentry;
-    }
-    return iSentry;
-}
-
-SentryOnGameFrame(){
-
-	new i = -1;
-	while ((i = FindEntityByClassname(i, "obj_sentrygun")) != -1)
-	{
-		new level = GetEntProp(i, Prop_Send, "m_iUpgradeLevel");
-		new metal = GetEntProp(i, Prop_Send, "m_iUpgradeMetal");
-		if(level < 3 && metal > 0){
-
-			
-			// new iLevel = level + 1;
-			// new iSentry = i;
-
-			//     new Float:fBuildMaxs[3];
-		 //    fBuildMaxs[0] = 24.0;
-		 //    fBuildMaxs[1] = 24.0;
-		 //    fBuildMaxs[2] = 66.0;
-
-		 //    new Float:fMdlWidth[3];
-		 //    fMdlWidth[0] = 1.0;
-		 //    fMdlWidth[1] = 0.5;
-		 //    fMdlWidth[2] = 0.0;
-		    
-		 //    decl String:sModel[64];
-		  
-		    
-		 //    new iShells, iHealth, iRockets;
-		    
-		 //    if(iLevel == 1)
-		 //    {
-		 //        sModel = "models/buildables/sentry1.mdl";
-		 //        iShells = 100;
-		 //        iHealth = 150;
-		 //    }
-		 //    else if(iLevel == 2)
-		 //    {
-		 //        sModel = "models/buildables/sentry2.mdl";
-		 //        iShells = 120;
-		 //        iHealth = 180;
-		 //    }
-		 //    else if(iLevel == 3)
-		 //    {
-		 //        sModel = "models/buildables/sentry3.mdl";
-		 //        iShells = 144;
-		 //        iHealth = 216;
-		 //        iRockets = 20;
-		 //    }
-		    
-		    
-		
-		    
-		 //    SetEntityModel(iSentry,sModel);
-		    
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_flAnimTime"),                 51, 4 , true);
-		 //   // SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_nNewSequenceParity"),         4, 4 , true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_nResetEventsParity"),         4, 4 , true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iAmmoShells") ,                 iShells, 4, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iMaxHealth"),                 iHealth, 4, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iHealth"),                     iHealth, 4, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bBuilding"),                 0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bPlacing"),                     0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bDisabled"),                 0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iObjectType"),                 3, true);
-		 //   // SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iState"),                     1, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iUpgradeMetal"),             0, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bHasSapper"),                 0, 2, true);
-		 //    //SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_bServerOverridePlacement"),     1, 1, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iUpgradeLevel"),             iLevel, 4, true);
-		 //    SetEntData(iSentry, FindSendPropOffs("CObjectSentrygun","m_iAmmoRockets"),                 iRockets, 4, true);
-		    
-		 //    //SetEntDataEnt2(iSentry, FindSendPropOffs("CObjectSentrygun","m_nSequence"), 0, true);
-
-		 //    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flCycle"),                     0.0, true);
-		 //    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flPlaybackRate"),             1.0, true);
-		 //    //SetEntDataFloat(iSentry, FindSendPropOffs("CObjectSentrygun","m_flPercentageConstructed"),     0.9, true);
-			// SetEntProp(iSentry, Prop_Send, "m_iHighestUpgradeLevel", iLevel);
-			// SetEntProp(iSentry, Prop_Send, "m_bBuilding", iLevel);
-		 //    SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_vecBuildMaxs"),         fBuildMaxs, true);
-		 //    SetEntDataVector(iSentry, FindSendPropOffs("CObjectSentrygun","m_flModelWidthScale"),     fMdlWidth, true);
-
-		}
-	}
-
-
-}
 
 public OnGameFrame(){
 	SkeysOnGameFrame();
 	if(GetConVarBool(hSpeedrunEnabled)){
 		SpeedrunOnGameFrame();
-	}
-	if(GetConVarBool(g_hFastBuild)){
-		SentryOnGameFrame();
 	}
 }
 
@@ -3314,21 +3024,23 @@ public Action:OnPlayerStartTouchFuncRegenerate(entity, other)
 }
 public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	if (!GetConVarBool(g_hPluginEnabled)) { return; }
-	new client = GetClientOfUserId(GetEventInt(event, "userid")), obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
+	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Continue; }
+	int client = GetClientOfUserId(GetEventInt(event, "userid")), obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
 
 	if (obj == 2)
 	{
-		if (GetConVarInt(g_hSentryLevel) == 3)
-		{
-			//SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeLevel"), 3, 4);
-			//SetEntData(index, FindSendPropOffs("CObjectSentrygun", "m_iUpgradeMetal"), 200);
-		}
+		int mini = GetEntProp(index, Prop_Send, "m_bMiniBuilding");
+		if (mini == 1) return Plugin_Continue;
+		if (GetConVarInt(g_hSentryLevel) == 2)
+			DispatchKeyValue(index, "defaultupgrade", "1");
+		else if (GetConVarInt(g_hSentryLevel) == 3)
+			DispatchKeyValue(index, "defaultupgrade", "2");
 	}
 	if (!g_bHardcore[client])
 	{
-		SetEntData(client, FindDataMapOffs(client, "m_iAmmo") + (3 * 4), 199, 4);
+		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
 	}
+	return Plugin_Continue;
 }
 public Action:eventPlayerUpgradedObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
@@ -3337,7 +3049,7 @@ public Action:eventPlayerUpgradedObj(Handle:event, const String:name[], bool:don
 
 	if (!g_bHardcore[client])
 	{
-		SetEntData(client, FindDataMapOffs(client, "m_iAmmo") + (3 * 4), 199, 4);
+		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
 	}
 }
 public Action:eventRoundStart(Handle:event, const String:name[], bool:dontBroadcast)
