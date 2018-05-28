@@ -3024,21 +3024,22 @@ public Action:OnPlayerStartTouchFuncRegenerate(entity, other)
 }
 public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	if (!GetConVarBool(g_hPluginEnabled)) { return Plugin_Continue; }
-	int client = GetClientOfUserId(GetEventInt(event, "userid")), obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
-
-	if (obj == 2)
-	{
+	int obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
+	PrintToChatAll("object is %i", obj);
+	if (obj == 2) {
 		int mini = GetEntProp(index, Prop_Send, "m_bMiniBuilding");
 		if (mini == 1) return Plugin_Continue;
+		
 		if (GetConVarInt(g_hSentryLevel) == 2)
 			DispatchKeyValue(index, "defaultupgrade", "1");
 		else if (GetConVarInt(g_hSentryLevel) == 3)
 			DispatchKeyValue(index, "defaultupgrade", "2");
+		else 
+			DispatchKeyValue(index, "defaultupgrade", "0");
 	}
-	if (!g_bHardcore[client])
-	{
-		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
+	else {
+		DispatchKeyValue(index, "defaultupgrade", "2");
+		PrintToChatAll("Upgraded obj %i", obj);
 	}
 	return Plugin_Continue;
 }
