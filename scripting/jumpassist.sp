@@ -226,7 +226,7 @@
 new String:g_URLMap[256] = "";
 new bool:g_bUpdateRegistered = false;
 
-#define PLUGIN_VERSION "0.8.20"
+#define PLUGIN_VERSION "0.8.21"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush - Updated by nolem, happs"
 
@@ -3039,7 +3039,6 @@ public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBr
 	}
 	else {
 		DispatchKeyValue(index, "defaultupgrade", "2");
-		PrintToChatAll("Upgraded obj %i", obj);
 	}
 	return Plugin_Continue;
 }
@@ -3433,7 +3432,7 @@ public cvarSentryLevelChanged(Handle:convar, const String:oldValue[], const Stri
 	if (StringToInt(newValue) == 0)
 		SetConVarBool(g_hSentryLevel, false);
 	else
-		SetConVarBool(g_hSentryLevel, true);
+		SetConVarBool(g_hSentryLevel, StringToInt(newValue));
 }
 public cvarSupermanChanged(Handle:convar, const String:oldValue[], const String:newValue[])
 {
