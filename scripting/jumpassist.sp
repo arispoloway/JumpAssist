@@ -3039,7 +3039,6 @@ public Action:eventPlayerBuiltObj(Handle:event, const String:name[], bool:dontBr
 	}
 	else {
 		DispatchKeyValue(index, "defaultupgrade", "2");
-		PrintToChatAll("Upgraded obj %i", obj);
 	}
 	return Plugin_Continue;
 }
