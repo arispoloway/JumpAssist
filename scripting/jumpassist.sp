@@ -3432,7 +3432,7 @@ public cvarSentryLevelChanged(Handle:convar, const String:oldValue[], const Stri
 	if (StringToInt(newValue) == 0)
 		SetConVarBool(g_hSentryLevel, false);
 	else
-		SetConVarBool(g_hSentryLevel, true);
+		SetConVarBool(g_hSentryLevel, StringToInt(newValue));
 }
 public cvarSupermanChanged(Handle:convar, const String:oldValue[], const String:newValue[])
 {
