@@ -71,13 +71,11 @@ public void SQL_OnSpeedrunCheckLoad(Handle owner, Handle hndl, const char[] erro
 				Format(query, sizeof(query), "%s '%f',", query, 0.0);
 			else {
 				t = processingZoneTimes[client][i]-processingZoneTimes[client][0];
-				if (t < 0.0){
+				if (t < 0.0)
 					t = 0.0;
-				}
 				Format(query, sizeof(query), "%s '%f'", query, t);
-				if (i != 31){
+				if (i != 31)
 					Format(query, sizeof(query), "%s,", query);
-				}
 			}
 		}
 		Format(query, sizeof(query), "%s);", query);
@@ -487,9 +485,8 @@ public void RestartSpeedrun(int client){
 	float v[3];
 	
 	speedrunStatus[client] = 2;
-	for (int i = 0; i < 32; i++){
+	for (int i = 0; i < 32; i++)
 		zoneTimes[client][i] = 0.0;
-	}
 	lastFrameInStartZone[client] = false;
 	ReSupply(client, g_iClientWeapons[client][0]);
 	ReSupply(client, g_iClientWeapons[client][1]);
