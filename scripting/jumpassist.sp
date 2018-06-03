@@ -216,7 +216,7 @@ int speedrunStatus[32], g_iLastTeleport[MAXPLAYERS+1];
 bool g_bRaceLocked[MAXPLAYERS+1], g_bRaceAmmoRegen[MAXPLAYERS+1], g_bRaceHealthRegen[MAXPLAYERS+1], g_bRaceClassForce[MAXPLAYERS+1];
 char szWebsite[128] = "http://www.jump.tf/", szForum[128] = "http://tf2rj.com/forum/", szJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0", g_URLMap[256];
 ConVar g_hWelcomeMsg, g_hCriticals, g_hSuperman, g_hSentryLevel, g_hCheapObjects, g_hAmmoCheat, g_hFastBuild, hCvarBranch, waitingForPlayers;
-Handle hArray_NoFuncRegen; 
+Handle hArray_NoFuncRegen;
 
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
@@ -395,7 +395,7 @@ public void OnPluginStart(){
 		g_bUpdateRegistered = true;
 #endif
 	}
-	else 
+	else
 		LogMessage("Updater plugin not found.");
 	ConnectToDatabase();
 }
@@ -447,11 +447,11 @@ stock void TF2_SetGameType(){
 
 #if defined DEBUG
 public Action Command_Update(int client, int args){
-	if (!LibraryExists("updater")) 
+	if (!LibraryExists("updater"))
 		ReplyToCommand(client,"updater plugin not found.");
 	else if (!g_bUpdateRegistered)
 		ReplyToCommand(client,"Updater not registered.");
-	else 
+	else
 		ReplyToCommand(client,"Force update returned %s", Updater_ForceUpdate() ? "true" : "false");
 	return Plugin_Handled;
 }
@@ -573,7 +573,7 @@ public void OnClientPutInServer(int client){
 
 //I SHOULD MAKE THIS DO A PAGED MENU IF IT DOESNT ALREADY IDK ANY MAPS WITH THAT MANY CPS ANYWAY
 public Action cmdRaceInitialize(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return;
 	if (GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client]){
 		PrintToChat(client, "\x01[\x03JA\x01] You may not race while speedrunning");
@@ -627,7 +627,7 @@ public int ControlPointSelector(Menu menu, MenuAction action, int param1, int pa
 }
 
 public Action cmdRaceInvite(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return Plugin_Handled;
 	if (!IsClientRacing(client)){
 		PrintToChat(client, "\x01[\x03JA\x01] You have not started a race.");
@@ -732,7 +732,7 @@ public int InviteHandler(Menu menu, MenuAction action, int param1, int param2){
 		// PrintToConsole(param1, "You selected item: %d", param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// }
-// else if (action == MenuAction_Cancel){
+	// else if (action == MenuAction_Cancel){
 		// PrintToServer("Client %d's menu was cancelled.  Reason: %d", param1, param2);
 		// g_bRaceInvitedTo[param1] = 0;
 	// }
@@ -789,7 +789,7 @@ public Action RaceCountdownGo(Handle timer, any raceID){
 }
 
 public Action cmdRaceList(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return;
 	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
 	int iClientToShow, iObserverMode;
@@ -801,7 +801,7 @@ public Action cmdRaceList(int client, int args){
 				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!");
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) 
+			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6)
 				return;
 		}
 		else {
@@ -864,7 +864,7 @@ public void ListHandler(Menu menu, MenuAction action, int param1, int param2){
 }
 
 public Action cmdRaceInfo(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return;
 
 	//WILL NEED TO ADD && !ISCLINETOBSERVER(CLIENT) WHEN I ADD SPEC SUPPORT FOR THIS
@@ -878,7 +878,7 @@ public Action cmdRaceInfo(int client, int args){
 				PrintToChat(client, "\x01[\x03JA\x01] This client is not in a race!");
 				return;
 			}
-			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) 
+			if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6)
 				return;
 		}
 		else {
@@ -912,7 +912,7 @@ public Action cmdRaceInfo(int client, int args){
 		status = "Race Status: Waiting for finshers";
 	if (g_bRaceClassForce[g_bRace[iClientToShow]])
 		classForce = "Class Force: Enabled";
-	else 
+	else
 		classForce = "Class Force: Disabled";
 	Panel panel = CreatePanel();
 	DrawPanelText(panel, leaderFormatted);
@@ -941,7 +941,7 @@ public int InfoHandler(Menu menu, MenuAction action, int param1, int param2){
 }
 
 public Action cmdRaceStart(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return;
 	if (g_bRace[client] == 0){
 		PrintToChat(client, "\x01[\x03JA\x01] You are not hosting a race!");
@@ -1014,7 +1014,7 @@ public Action cmdRaceLeave(int client, int args){
 // }
 
 public Action cmdRaceInitializeServer(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return Plugin_Handled;
 	if (g_bSpeedRun[client]){
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Speedrun_Active");
@@ -1081,7 +1081,7 @@ public int ControlPointSelectorServer(Menu menu, MenuAction action, int param1, 
 }
 
 public Action cmdRaceSpec(int client, int args){
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return Plugin_Handled;
 	if (args == 0){
 		PrintToChat(client, "\x01[\x03JA\x01] No target race selected.");
@@ -1090,7 +1090,7 @@ public Action cmdRaceSpec(int client, int args){
 	char arg1[32];
 	GetCmdArg(1, arg1, sizeof(arg1));
 	int target = FindTarget(client, arg1, true, false);
-	if (target == -1) 
+	if (target == -1)
 		return Plugin_Handled;
 	else {
 		if (target == client){
@@ -1150,7 +1150,7 @@ public Action cmdRaceSet(int client, int args){
 	else {
 		if (StrEqual(arg2, "on", false))
 			toSet = true;
-		else 
+		else
 			toSet = false;
 	}
 	if (StrEqual(arg1, "ammo", false)){
@@ -1330,7 +1330,7 @@ stock bool IsClientSpectatingRace(int client, int race){
 	int iClientToShow, iObserverMode;
 	iObserverMode = GetEntPropEnt(client, Prop_Send, "m_iObserverMode");
 	iClientToShow = GetEntPropEnt(client, Prop_Send, "m_hObserverTarget");
-	if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6) 
+	if (!IsValidClient(client) || !IsValidClient(iClientToShow) || iObserverMode == 6)
 		return false;
 	if (IsClientInRace(iClientToShow, race))
 		return true;
@@ -1354,7 +1354,7 @@ stock char TimeFormat(float timeTaken){
 
 	if (hours != 0)
 		Format(final, sizeof(final), "%s:%s:%s:%s", hoursString, minutesString, secondsString, msFormatFinal);
-	else 
+	else
 		Format(final, sizeof(final), "%s:%s:%s", minutesString, secondsString, msFormatFinal);
 	return final;
 }
@@ -1362,7 +1362,7 @@ stock char FormatTimeComponent(int time){
 	char final[8];
 	if (time > 9)
 		Format(final, sizeof(final), "%d", time);
-	else 
+	else
 		Format(final, sizeof(final), "0%d", time);
 	return final;
 }
@@ -1526,7 +1526,7 @@ stock void CheckBeggers(int client){
 			LogMessage("Preventing player %d from touching func_regenerate");
 #endif
 		}
-	} 
+	}
 	else if(index != -1){
 		RemoveFromArray(hArray_NoFuncRegen, index);
 #if defined DEBUG
@@ -1624,7 +1624,7 @@ public Action cmdDoRegen(int client, int args){
 		SetRegen(client, "regen", "off");
 		return Plugin_Handled;
 	}
-	else 
+	else
 		SetRegen(client, "Regen", "Display");
 	return Plugin_Handled;
 }
@@ -1868,7 +1868,7 @@ void Hardcore(int client){
 		EraseLocs(client);
 		if (GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client])
 			RestartSpeedrun(client);
-		else 
+		else
 			TF2_RespawnPlayer(client);
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "Hardcore_On", cLightGreen, cDefault);
 	}
@@ -1879,7 +1879,7 @@ void Hardcore(int client){
 	}
 }
 void SetRegen(int client, char[] RegenType, char[] RegenToggle){
-	if (!GetConVarBool(g_hPluginEnabled)) 
+	if (!GetConVarBool(g_hPluginEnabled))
 		return;
 	if (StrEqual(RegenType, "Ammo", false)){
 		if (g_bHardcore[client])
@@ -1999,16 +1999,16 @@ public void SDKHook_OnWeaponEquipPost(int client, int weapon){
 }
 stock bool IsValidWeapon(int entity){
 	char strClassname[128];
-	if (IsValidEntity(entity) && GetEntityClassname(entity, strClassname, sizeof(strClassname)) && StrContains(strClassname, "tf_weapon", false) != -1) 
+	if (IsValidEntity(entity) && GetEntityClassname(entity, strClassname, sizeof(strClassname)) && StrContains(strClassname, "tf_weapon", false) != -1)
 		return true;
 	return false;
 }
 stock void ReSupply(int client, int weapon){
-	if (!GetConVarBool(g_hPluginEnabled)) 
+	if (!GetConVarBool(g_hPluginEnabled))
 		return; //Check if the plugin is enabled
-	if (!IsValidWeapon(weapon)) 
+	if (!IsValidWeapon(weapon))
 		return; //Check if the weapon is valid
-	if (!IsValidClient(client) || !IsPlayerAlive(client)) 
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
 		return; //Check if the client is valid and alive
 
 	int iWepIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");   //Grab the weapon index
@@ -2125,7 +2125,7 @@ public Action cmdRestart(int client, int args){
 		ResetPlayerPos(client);
 	if (GetConVarBool(hSpeedrunEnabled) && IsSpeedrunMap()&& speedrunStatus[client])
 		RestartSpeedrun(client);
-	else 
+	else
 		TF2_RespawnPlayer(client);
 	PrintToChat(client, "\x01[\x03JA\x01] %t", "Player_Restarted");
 	g_iLastTeleport[client] = 0;
@@ -2199,7 +2199,7 @@ public int JumpListHandler(Menu menu, MenuAction action, int client, int item){
 	if (action == MenuAction_Select){
 		GetMenuItem(menu, item, MenuInfo, sizeof(MenuInfo));
 		MenuSendToLocation(client, Jtele, MenuInfo);
-	} 
+	}
 	else if (action == MenuAction_End)
 		CloseHandle(menu);
 	return;
@@ -2269,7 +2269,7 @@ public int Native_JA_PrepSpeedRun(Handle plugin, int numParams){
 	EraseLocs(client);
 
 	if (g_bUnkillable[client]){
-		g_bUnkillable[client] = false; 
+		g_bUnkillable[client] = false;
 		SetEntProp(client, Prop_Data, "m_takedamage", 2, 1);
 	}
 	g_bSpeedRun[client] = true;
@@ -2312,14 +2312,14 @@ public Action eventPlayerBuiltObj(Handle event, const char[] name, bool dontBroa
 	int obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
 	if (obj == 2){
 		int mini = GetEntProp(index, Prop_Send, "m_bMiniBuilding");
-		if (mini == 1) 
+		if (mini == 1)
 			return Plugin_Continue;
 		
 		if (GetConVarInt(g_hSentryLevel) == 2)
 			DispatchKeyValue(index, "defaultupgrade", "1");
 		else if (GetConVarInt(g_hSentryLevel) == 3)
 			DispatchKeyValue(index, "defaultupgrade", "2");
-		else 
+		else
 			DispatchKeyValue(index, "defaultupgrade", "0");
 	}
 	return Plugin_Continue;
