@@ -6,8 +6,8 @@ char g_sSoundHook[][] = {
 	"regenerate",
 	"ammo_pickup",
 	"pain",
-	"fall_damage", 
-	"grenade_jump", 
+	"fall_damage",
+	"grenade_jump",
 	"fleshbreak"
 };
 
@@ -24,7 +24,7 @@ public Action sound_hook(int clients[64], int &numClients, char sample[PLATFORM_
 }
 
 public Action HookVoice(UserMsg msg_id, BfRead bf, const int[] players, int playersNum, bool reliable, bool init){
-	if (!GetConVarBool(g_hPluginEnabled)) 
+	if (!GetConVarBool(g_hPluginEnabled))
 		return Plugin_Continue;
 	int client = BfReadByte(bf), vMenu1 = BfReadByte(bf), vMenu2 = BfReadByte(bf);
 	

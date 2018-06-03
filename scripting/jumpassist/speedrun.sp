@@ -387,7 +387,7 @@ public Action cmdShowWR(int client, int args){
 		ReplyToCommand(client, "\x01[\x03JA\x01] Cannot use this command from rcon");
 		return Plugin_Handled;
 	}
-	char query[1024] = "", steamid[32], endtime[4]; 
+	char query[1024] = "", steamid[32], endtime[4];
 	int class;
 	
 	GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
@@ -1018,7 +1018,7 @@ public void UpdateSteamID(int client){
 public void SQL_OnSteamIDCheck(Handle owner, Handle hndl, const char[] error, any data){
 	int client = data;
 	char query[1024];
- 
+
 	if (hndl == INVALID_HANDLE)
 		LogError("OnSpeedrunSubmit() - Query failed! %s", error);
 	else if (SQL_GetRowCount(hndl)){
@@ -1138,10 +1138,10 @@ stock void Effect_DrawBeamBox(
 		Array_Copy(upperCorner, corners[i+4], 3);
 	}
 	corners[1][0] = upperCorner[0];
-	corners[2][0] = upperCorner[0]; 
+	corners[2][0] = upperCorner[0];
 	corners[2][1] = upperCorner[1];
 	corners[3][1] = upperCorner[1];
-	corners[4][0] = bottomCorner[0]; 
+	corners[4][0] = bottomCorner[0];
 	corners[4][1] = bottomCorner[1];
 	corners[5][1] = bottomCorner[1];
 	corners[7][0] = bottomCorner[0];

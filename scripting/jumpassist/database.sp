@@ -19,7 +19,7 @@ stock void JA_CreateForward(){
 }
 
 stock void ConnectToDatabase(){
-	SQL_TConnect(SQL_OnConnect, "jatest");
+	SQL_TConnect(SQL_OnConnect, "jumpassist");
 }
 
 stock void RunDBCheck(){
@@ -565,7 +565,7 @@ public Action cmdAddTele(int client, int args){
 		PrintToChat(client, "\x01[\x03JA\x01] %t", "AddTele_Help");
 		return Plugin_Handled;
 	}
-	char jump_name[32], sQuery[1024], Map[32]; 
+	char jump_name[32], sQuery[1024], Map[32];
 	float Location[3],  Angles[3];
 
 	GetClientAbsOrigin(client, Location); GetClientAbsAngles(client, Angles); GetCmdArg(1, jump_name, sizeof(jump_name)); GetCurrentMap(Map, sizeof(Map));
@@ -796,9 +796,9 @@ public Action cmdMapSet(int client, int args){
 		SQL_TQuery(g_hDatabase, SQL_OnMapSettingsUpdated, query, client);
 	}
 	if (StrEqual(arg1, "lockcps", false)){
-		if (StrEqual(arg2, "on", false)) 
+		if (StrEqual(arg2, "on", false))
 			g_iLock = 1;
-		else if (StrEqual(arg2, "off", false)) 
+		else if (StrEqual(arg2, "off", false))
 			g_iLock = 0;
 		else {
 			PrintToChat(client, "\x01[\x03JA\x01] %t", "Mapset_LockCP_Help");
