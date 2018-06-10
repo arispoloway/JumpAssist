@@ -184,23 +184,27 @@
 #include <sourcemod>
 #include <tf2_stocks>
 #include <sdkhooks>
+#include <sdktools>
+
 #if !defined REQUIRE_PLUGIN
 #define REQUIRE_PLUGIN
 #endif
+
 #if !defined AUTOLOAD_EXTENSIONS
 #define AUTOLOAD_EXTENSIONS
 #endif
-#define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
-//#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
-#define UPDATE_URL_BRANCH "master"
-#define UPDATE_URL_FILE "updatefile.txt"
-#define PLUGIN_VERSION "0.9.0"
-#define PLUGIN_NAME "[TF2] Jump Assist"
-#define PLUGIN_AUTHOR "rush, nolem, happs, joinedsenses"
+
 #if defined DEBUG
 bool g_bUpdateRegistered;
 #endif
 
+#define UPDATE_URL_BASE "http://raw.github.com/arispoloway/JumpAssist"
+//#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
+#define UPDATE_URL_BRANCH "master"
+#define UPDATE_URL_FILE "updatefile.txt"
+#define PLUGIN_VERSION "0.9.1"
+#define PLUGIN_NAME "[TF2] Jump Assist"
+#define PLUGIN_AUTHOR "rush, nolem, happs, joinedsenses"
 #define cDefault 0x01
 #define cLightGreen 0x03
 
@@ -215,8 +219,8 @@ int g_bRace[MAXPLAYERS+1], g_bRaceStatus[MAXPLAYERS+1], g_bRaceFinishedPlayers[M
 int speedrunStatus[32], g_iLastTeleport[MAXPLAYERS+1];
 bool g_bRaceLocked[MAXPLAYERS+1], g_bRaceAmmoRegen[MAXPLAYERS+1], g_bRaceHealthRegen[MAXPLAYERS+1], g_bRaceClassForce[MAXPLAYERS+1];
 char szWebsite[128] = "http://www.jump.tf/", szForum[128] = "http://tf2rj.com/forum/", szJumpAssist[128] = "http://tf2rj.com/forum/index.php?topic=854.0", g_URLMap[256];
-ConVar g_hWelcomeMsg, g_hCriticals, g_hSuperman, g_hSentryLevel, g_hCheapObjects, g_hAmmoCheat, g_hFastBuild, hCvarBranch, waitingForPlayers;
-Handle hArray_NoFuncRegen;
+ConVar g_hWelcomeMsg, g_hCriticals, g_hSuperman, g_hSentryLevel, g_hCheapObjects, g_hAmmoCheat, hCvarBranch, waitingForPlayers;
+Handle hArray_NoFuncRegen, g_hSDKStartBuilding, g_hSDKFinishBuilding, g_hSDKStartUpgrading, g_hSDKFinishUpgrading;
 
 #include "jumpassist/skeys.sp"
 #include "jumpassist/database.sp"
@@ -243,13 +247,12 @@ public void OnPluginStart(){
 	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
 	g_hPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
 	g_hWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
-	g_hFastBuild = CreateConVar("ja_fastbuild", "1", "Allows engineers near instant buildings.", FCVAR_NOTIFY);
 	g_hAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);
-	g_hCheapObjects = CreateConVar("ja_cheapobjects", "0", "No metal cost on buildings.", FCVAR_NOTIFY);
+	g_hCheapObjects = CreateConVar("ja_cheapobjects", "1", "No metal cost on buildings.", FCVAR_NOTIFY);
 	g_hCriticals = CreateConVar("ja_crits", "0", "Allow critical hits.", FCVAR_NOTIFY);
 	g_hSuperman = CreateConVar("ja_superman", "0", "Allows everyone to be invincible.", FCVAR_NOTIFY);
-	g_hSoundBlock = CreateConVar("ja_sounds", "0", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_NOTIFY);
-	g_hSentryLevel = CreateConVar("ja_sglevel", "3", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
+	g_hSoundBlock = CreateConVar("ja_sounds", "1", "Block pain, regenerate, and ammo pickup sounds?", FCVAR_NOTIFY);
+	g_hSentryLevel = CreateConVar("ja_sglevel", "1", "Sets the default sentry level (1-3)", FCVAR_NOTIFY);
 	Format(sDesc, sizeof(sDesc),"Select a branch folder from %s to update from.", UPDATE_URL_BASE);
 	hCvarBranch = CreateConVar("ja_update_branch", UPDATE_URL_BRANCH, sDesc, FCVAR_NOTIFY);
 	hSpeedrunEnabled = CreateConVar("ja_speedrun_enabled", "1", "Turns speedrunning on/off", FCVAR_NOTIFY);
@@ -343,7 +346,6 @@ public void OnPluginStart(){
 	HookEvent("post_inventory_application", eventInventoryUpdate);
 
 	// ConVar Hooks
-	HookConVarChange(g_hFastBuild, cvarFastBuildChanged);
 	HookConVarChange(g_hCheapObjects, cvarCheapObjectsChanged);
 	HookConVarChange(g_hAmmoCheat, cvarAmmoCheatChanged);
 	HookConVarChange(g_hWelcomeMsg, cvarWelcomeMsgChanged);
@@ -366,7 +368,34 @@ public void OnPluginStart(){
 	HudDisplayM1 = CreateHudSynchronizer();
 	HudDisplayM2 = CreateHudSynchronizer();
 	waitingForPlayers = FindConVar("mp_waitingforplayers_time");
+	
+	char sFilePath[PLATFORM_MAX_PATH];
+	BuildPath(Path_SM, sFilePath, sizeof(sFilePath), "gamedata/buildings.txt");
+	if(FileExists(sFilePath)) {
+		Handle hGameConf = LoadGameConfigFile("buildings");
+		if(hGameConf != INVALID_HANDLE ) {
+			StartPrepSDKCall(SDKCall_Entity);
+			PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBaseObject::StartBuilding");
+			g_hSDKStartBuilding = EndPrepSDKCall();
 
+			StartPrepSDKCall(SDKCall_Entity);
+			PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBaseObject::FinishedBuilding");
+			g_hSDKFinishBuilding = EndPrepSDKCall();
+
+			StartPrepSDKCall(SDKCall_Entity);
+			PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBaseObject::StartUpgrading");
+			g_hSDKStartUpgrading = EndPrepSDKCall();
+			
+			StartPrepSDKCall(SDKCall_Entity);
+			PrepSDKCall_SetFromConf(hGameConf, SDKConf_Virtual, "CBaseObject::FinishUpgrading");
+			g_hSDKFinishUpgrading = EndPrepSDKCall();
+			
+			CloseHandle(hGameConf);
+		}
+		if (g_hSDKStartBuilding == null ||g_hSDKFinishBuilding == null || g_hSDKStartUpgrading == null || g_hSDKFinishUpgrading == null)
+			LogError("Failed to load buildings gamedata.  Instant building and upgrades will not be available.");
+	}
+	
 	hArray_NoFuncRegen = CreateArray();
 
 	for (int i = 0; i < MAXPLAYERS+1; i++){
@@ -2216,8 +2245,6 @@ stock void SetCvarValues(){
 		return;
 	if (!GetConVarBool(g_hCriticals))
 		SetConVarInt(FindConVar("tf_weapon_criticals"), 0, true, false);
-	if (GetConVarBool(g_hFastBuild))
-		SetConVarInt(FindConVar("tf_fastbuild"), 1, false, false);
 	if (GetConVarBool(g_hCheapObjects))
 		SetConVarInt(FindConVar("tf_cheapobjects"), 1, false, false);
 	if (GetConVarBool(g_hAmmoCheat))
@@ -2306,35 +2333,71 @@ public Action OnPlayerStartTouchFuncRegenerate(int entity, int other){
 	return Plugin_Continue;
 }
 
-public Action eventPlayerBuiltObj(Handle event, const char[] name, bool dontBroadcast){
+public Action eventPlayerBuiltObj(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return Plugin_Continue;
+	
 	int obj = GetEventInt(event, "object"), index = GetEventInt(event, "index");
+
+	if (g_hSDKStartBuilding == null ||g_hSDKFinishBuilding == null || g_hSDKStartUpgrading == null || g_hSDKFinishUpgrading == null)
+		return Plugin_Continue;
+
+	RequestFrame(FrameCallback_StartBuilding, index);
+	RequestFrame(FrameCallback_FinishBuilding, index);
+
+	int maxupgradelevel = GetEntProp(index, Prop_Send, "m_iHighestUpgradeLevel");
+
 	if (obj == 2){
 		int mini = GetEntProp(index, Prop_Send, "m_bMiniBuilding");
-		if (mini == 1)
-			return Plugin_Continue;
-		
-		if (GetConVarInt(g_hSentryLevel) == 2)
-			DispatchKeyValue(index, "defaultupgrade", "1");
-		else if (GetConVarInt(g_hSentryLevel) == 3)
-			DispatchKeyValue(index, "defaultupgrade", "2");
-		else
-			DispatchKeyValue(index, "defaultupgrade", "0");
+		if (mini == 1) return Plugin_Continue;
+		if (maxupgradelevel >  g_hSentryLevel.IntValue){
+			SetEntProp(index, Prop_Send, "m_iUpgradeLevel", maxupgradelevel);
+			RequestFrame(FrameCallback_FinishUpgrading, index);
+		}
+		else if(g_hSentryLevel.IntValue != 1){
+			SetEntProp(index, Prop_Send, "m_iUpgradeLevel", g_hSentryLevel.IntValue-1);
+			SetEntProp(index, Prop_Send, "m_iHighestUpgradeLevel", g_hSentryLevel.IntValue-1);
+			RequestFrame(FrameCallback_StartUpgrading, index);
+			RequestFrame(FrameCallback_FinishUpgrading, index);
+		}
+	}
+	else {
+		SetEntProp(index, Prop_Send, "m_iUpgradeLevel", 2);
+		SetEntProp(index, Prop_Send, "m_iHighestUpgradeLevel", 2);
+		RequestFrame(FrameCallback_StartUpgrading, index);
+		RequestFrame(FrameCallback_FinishUpgrading, index);
+	}
+	SetEntProp(index, Prop_Send, "m_CollisionGroup", 2);
+	SetEntProp(index, Prop_Send, "m_iUpgradeMetalRequired", 0);
+	SetVariantInt(GetEntProp(index, Prop_Data, "m_iMaxHealth"));
+	AcceptEntityInput(index, "SetHealth");
+	return Plugin_Continue;
+}
+
+public Action eventPlayerUpgradedObj(Event event, const char[] name, bool dontBroadcast){
+	if (!GetConVarBool(g_hPluginEnabled))
+		return Plugin_Continue;
+	if (g_hSDKFinishUpgrading != null) {
+		int entity = event.GetInt("index");
+		RequestFrame(FrameCallback_FinishUpgrading, entity);
 	}
 	return Plugin_Continue;
 }
 
-public Action eventPlayerUpgradedObj(Handle event, const char[] name, bool dontBroadcast){
-	if (!GetConVarBool(g_hPluginEnabled))
-		return;
-	int client = GetClientOfUserId(GetEventInt(event, "userid")); //object = GetEventInt(event, "object"), index = GetEventInt(event, "index");
-
-	if (!g_bHardcore[client])
-		SetEntData(client, FindDataMapInfo(client, "m_iAmmo") + (3 * 4), 199, 4);
+public void FrameCallback_StartBuilding(any entity){
+	SDKCall(g_hSDKStartBuilding, entity);
+}
+public void FrameCallback_FinishBuilding(any entity){
+	SDKCall(g_hSDKFinishBuilding, entity);
+}
+public void FrameCallback_StartUpgrading(any entity){
+	SDKCall(g_hSDKStartUpgrading, entity);
+}
+public void FrameCallback_FinishUpgrading(any entity){
+	SDKCall(g_hSDKFinishUpgrading, entity);
 }
 
-public Action eventRoundStart(Handle event, const char[] name, bool dontBroadcast){
+public Action eventRoundStart(Event event, const char[] name, bool dontBroadcast){
 	char currentMap[32];
 	GetCurrentMap(currentMap, sizeof(currentMap));
 	
@@ -2346,7 +2409,7 @@ public Action eventRoundStart(Handle event, const char[] name, bool dontBroadcas
 	SetCvarValues();
 }
 
-public Action eventTouchCP(Handle event, const char[] name, bool dontBroadcast){
+public Action eventTouchCP(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return;
 	int client = GetEventInt(event, "player"), area = GetEventInt(event, "area"), class = view_as<int>(TF2_GetPlayerClass(client)), entity;
@@ -2450,7 +2513,7 @@ public Action eventTouchCP(Handle event, const char[] name, bool dontBroadcast){
 	}
 }
 
-public Action eventPlayerChangeClass(Handle event, const char[] name, bool dontBroadcast){
+public Action eventPlayerChangeClass(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return;
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -2491,7 +2554,7 @@ public Action eventPlayerChangeClass(Handle event, const char[] name, bool dontB
 	}
 }
 
-public Action eventPlayerChangeTeam(Handle event, const char[] name, bool dontBroadcast){
+public Action eventPlayerChangeTeam(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return Plugin_Handled;
 	int client = GetClientOfUserId(GetEventInt(event, "userid")), team = GetEventInt(event, "team");
@@ -2527,14 +2590,14 @@ public Action eventInventoryUpdate(Handle hEvent, char[] strName, bool bDontBroa
 	return Plugin_Continue;
 }
 
-public Action eventPlayerDeath(Handle event, const char[] name, bool dontBroadcast){
+public Action eventPlayerDeath(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return;
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	CreateTimer(0.1, timerRespawn, client);
 }
 
-public Action eventPlayerHurt(Handle event, const char[] name, bool dontBroadcast){
+public Action eventPlayerHurt(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return;
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -2548,7 +2611,7 @@ public Action eventPlayerHurt(Handle event, const char[] name, bool dontBroadcas
 	}
 }
 
-public Action eventPlayerSpawn(Handle event, const char[] name, bool dontBroadcast){
+public Action eventPlayerSpawn(Event event, const char[] name, bool dontBroadcast){
 	if (!GetConVarBool(g_hPluginEnabled))
 		return;
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
@@ -2605,13 +2668,6 @@ public Action WelcomePlayer(Handle timer, any client){
 /*****************************************************************************************************************
 											ConVars Hooks
 *****************************************************************************************************************/
-public void cvarFastBuildChanged(Handle convar, const char[] oldValue, const char[] newValue){
-	if (StringToInt(newValue) == 0)
-		SetConVarInt(FindConVar("tf_fastbuild"), 0);
-	else
-		SetConVarInt(FindConVar("tf_fastbuild"), 1);
-}
-
 public void cvarCheapObjectsChanged(Handle convar, const char[] oldValue, const char[] newValue){
 	if (StringToInt(newValue) == 0)
 		SetConVarInt(FindConVar("tf_cheapobjects"), 0);
