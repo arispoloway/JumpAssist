@@ -1,0 +1,29 @@
+"Games"
+{
+	"tf"
+	{
+		"Offsets"
+		{
+      			"CBaseObject::StartBuilding"
+			{
+				"windows"	"335"
+				"linux"		"336"
+			}
+      			"CBaseObject::FinishedBuilding"
+			{
+				"windows"	"336"
+				"linux"		"337"
+			}
+			"CBaseObject::StartUpgrading"
+			{
+				"windows"	"376"
+				"linux"		"377"
+			}
+			"CBaseObject::FinishUpgrading"
+			{
+				"windows"	"377"
+				"linux"		"378"
+			}
+		}
+	}
+}
