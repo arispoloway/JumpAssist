@@ -48,17 +48,13 @@ void SkeysOnGameFrame() {
 			ClearSyncHud(i, HudDisplayM2);
 
 			if (g_iButtons[i] & IN_SCORE) {
-				return;
+				continue;
 			}
 			iObserverMode = GetEntPropEnt(i, Prop_Send, "m_iObserverMode");
-			if (IsClientObserver(i)) {
-				iClientToShow = GetEntPropEnt(i, Prop_Send, "m_hObserverTarget");
-			}
-			else {
-				iClientToShow = i;
-			}
-			if (!IsValidClient(i) || !IsValidClient(iClientToShow) || iObserverMode == 6) {
-				return;
+			iClientToShow = IsClientObserver(i) ? GetEntPropEnt(i, Prop_Send, "m_hObserverTarget") : i;
+
+			if (!IsValidClient(i) || !IsValidClient(iClientToShow) || iObserverMode == 7) {
+				continue;
 			}
 
 			int r = g_iSkeysRed[i];
