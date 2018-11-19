@@ -19,7 +19,5 @@
 		"Source"				"Path_SM/scripting/jumpassist/skillsrank.sp"
 		"Source"				"Path_SM/scripting/jumpassist/sound.sp"
 		"Source"				"Path_SM/scripting/include/jumpassist.inc"
-
 	}
-
 }
