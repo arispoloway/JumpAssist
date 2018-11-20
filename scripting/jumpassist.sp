@@ -402,7 +402,7 @@ public void OnPluginStart() {
 	HudDisplayJump = CreateHudSynchronizer();
 	HudDisplayM1 = CreateHudSynchronizer();
 	HudDisplayM2 = CreateHudSynchronizer();
-	cvarWaitingForPlayers = FindConVar("mp_cvarWaitingForPlayers_time");
+	cvarWaitingForPlayers = FindConVar("mp_waitingforplayers_time");
 
 	char sFilePath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, sFilePath, sizeof(sFilePath), "gamedata/buildings.txt");
