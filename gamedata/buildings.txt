@@ -4,15 +4,15 @@
 	{
 		"Offsets"
 		{
-      			"CBaseObject::StartBuilding"
+      		"CBaseObject::StartBuilding"
 			{
 				"windows"	"335"
-				"linux"		"336"
+				"linux"		"337"
 			}
-      			"CBaseObject::FinishedBuilding"
+      		"CBaseObject::FinishedBuilding"
 			{
 				"windows"	"336"
-				"linux"		"337"
+				"linux"		"338"
 			}
 			"CBaseObject::StartUpgrading"
 			{

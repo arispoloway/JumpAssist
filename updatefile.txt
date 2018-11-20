@@ -4,7 +4,7 @@
 	{
 		"Version"
 		{
-			"Latest"			"0.9.3"
+			"Latest"			"0.9.4"
 		}
 	}
 
@@ -12,6 +12,7 @@
 	{
 		"Plugin"				"Path_SM/plugins/jumpassist.smx"
 		"Plugin"				"Path_SM/translations/jumpassist.phrases.txt"
+		"Plugin"				"Path_SM/gamedata/buildings.txt"
 		
 		"Source"				"Path_SM/scripting/jumpassist.sp"
 		"Source"				"Path_SM/scripting/jumpassist/skeys.sp"
