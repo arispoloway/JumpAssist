@@ -201,7 +201,7 @@ bool g_bUpdateRegistered;
 //#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
 #define UPDATE_URL_BRANCH "master"
 #define UPDATE_URL_FILE "updatefile.txt"
-#define PLUGIN_VERSION "0.9.2"
+#define PLUGIN_VERSION "0.9.3"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush, nolem, happs, joinedsenses"
 #define cDefault 0x01
