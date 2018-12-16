@@ -201,7 +201,7 @@ bool g_bUpdateRegistered;
 //#define UPDATE_URL_BASE   "http://raw.github.com/pliesveld/JumpAssist"
 #define UPDATE_URL_BRANCH "master"
 #define UPDATE_URL_FILE "updatefile.txt"
-#define PLUGIN_VERSION "0.9.4"
+#define PLUGIN_VERSION "0.9.5"
 #define PLUGIN_NAME "[TF2] Jump Assist"
 #define PLUGIN_AUTHOR "rush, nolem, happs, joinedsenses"
 #define cDefault 0x01
@@ -281,7 +281,7 @@ public void OnPluginStart() {
 	RegPluginLibrary("jumpassist");
 
 	// ConVars
-	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD);
+	CreateConVar("jumpassist_version", PLUGIN_VERSION, "Jump assist version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY|FCVAR_DONTRECORD).SetString(PLUGIN_VERSION);
 	cvarPluginEnabled = CreateConVar("ja_enable", "1", "Turns JumpAssist on/off.", FCVAR_NOTIFY);
 	cvarWelcomeMsg = CreateConVar("ja_welcomemsg", "1", "Show clients the welcome message when they join?", FCVAR_NOTIFY);
 	cvarAmmoCheat = CreateConVar("ja_ammocheat", "1", "Allows engineers infinite sentrygun ammo.", FCVAR_NOTIFY);

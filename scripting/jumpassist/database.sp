@@ -522,7 +522,7 @@ public void SQL_OnReloadPlayerData(Database db, DBResultSet results, const char[
 	}
 	else if (results.RowCount) {
 		results.FetchRow();
-		for (int i = i; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			g_fOrigin[client][i] = results.FetchFloat(i);
 			g_fAngles[client][i] = results.FetchFloat(i+3);
 		}
